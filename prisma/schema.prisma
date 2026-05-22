@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Auth Extension ───────────────────────────────────────────────────────────
+// Extends Supabase auth.users with application-level profile data.
+// Row Level Security is managed at the Supabase level.
+// Every insert/update must match the authenticated user's UID.
+
+model Profile {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  avatarUrl String?  @map("avatar_url")
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("profiles")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
