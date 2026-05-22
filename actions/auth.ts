@@ -6,6 +6,7 @@ import {
   loginSchema,
   registerSchema,
   forgotPasswordSchema,
+  updatePasswordSchema,
 } from "@/lib/validations/auth";
 import type { ActionState } from "@/types";
 
@@ -80,6 +81,7 @@ export async function register(
       data: {
         full_name: parsed.data.fullName,
       },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     },
   });
 
@@ -143,6 +145,42 @@ export async function forgotPassword(
     status: "success",
     message: "If an account exists, a reset link has been sent to your email.",
   };
+}
+
+export async function updatePassword(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const raw = {
+    password: formData.get("password") as string,
+    confirmPassword: formData.get("confirmPassword") as string,
+  };
+
+  const parsed = updatePasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Invalid input",
+      fieldErrors: parsed.error.flatten().fieldErrors as Record<
+        string,
+        string[]
+      >,
+    };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return {
+      status: "error",
+      error: "Unable to update password. Please try again.",
+    };
+  }
+
+  redirect("/dashboard");
 }
 
 export async function logout(): Promise<void> {
