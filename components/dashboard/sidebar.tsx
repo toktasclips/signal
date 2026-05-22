@@ -22,7 +22,6 @@ const navItems = [
     label: "Hot List",
     href: "/hot-list",
     icon: Flame,
-    soon: true,
   },
   {
     label: "Pipeline",

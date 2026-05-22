@@ -2,6 +2,7 @@ export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
 
 export type LeadStatus = "new" | "contacted" | "qualified" | "offer_sent" | "won" | "lost";
 export type LeadTemperature = "cold" | "warm" | "hot" | "ready";
+export type LeadPriority = "low" | "medium" | "high" | "urgent";
 
 export interface Lead {
   id: string;
@@ -16,6 +17,10 @@ export interface Lead {
   value: number | null;
   notes: string | null;
   last_contacted_at: string | null;
+  is_hot: boolean;
+  priority: LeadPriority;
+  follow_up_date: string | null;
+  quick_note: string | null;
   created_at: string;
   updated_at: string;
 }

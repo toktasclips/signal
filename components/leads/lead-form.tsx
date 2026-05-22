@@ -147,6 +147,56 @@ export function LeadForm({ action, defaultValues, onSuccess }: LeadFormProps) {
         </div>
       </div>
 
+      {/* Priority + Follow-up */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="priority">Priority</Label>
+          <Select id="priority" name="priority" defaultValue={defaultValues?.priority ?? "medium"} disabled={isPending}>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="follow_up_date">Follow-up Date</Label>
+          <Input
+            id="follow_up_date"
+            name="follow_up_date"
+            type="date"
+            defaultValue={defaultValues?.follow_up_date ?? ""}
+            disabled={isPending}
+          />
+        </div>
+      </div>
+
+      {/* Hot toggle */}
+      <div className="flex items-center gap-2">
+        <input
+          id="is_hot"
+          name="is_hot"
+          type="checkbox"
+          defaultChecked={defaultValues?.is_hot ?? false}
+          disabled={isPending}
+          className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
+        />
+        <Label htmlFor="is_hot" className="cursor-pointer font-normal">
+          Mark as hot lead
+        </Label>
+      </div>
+
+      {/* Quick note */}
+      <div className="space-y-1.5">
+        <Label htmlFor="quick_note">Quick Note</Label>
+        <Input
+          id="quick_note"
+          name="quick_note"
+          placeholder="One-liner for the hot list…"
+          defaultValue={defaultValues?.quick_note ?? ""}
+          disabled={isPending}
+        />
+      </div>
+
       {/* Notes */}
       <div className="space-y-1.5">
         <Label htmlFor="notes">Notes</Label>

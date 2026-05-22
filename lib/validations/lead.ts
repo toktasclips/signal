@@ -20,11 +20,23 @@ export const leadSchema = z.object({
     z.number().positive("Must be a positive number").nullable()
   ),
   notes: optStr(5000),
-  last_contacted_at: z
-    .string()
-    .optional()
-    .nullable()
-    .transform((v) => v || null),
+  last_contacted_at: z.string().optional().nullable().transform((v) => v || null),
+  is_hot: z.preprocess((v) => v === "on" || v === true, z.boolean()).default(false),
+  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+  follow_up_date: z.string().optional().nullable().transform((v) => v || null),
+  quick_note: optStr(500),
 });
 
 export type LeadInput = z.infer<typeof leadSchema>;
+
+export const hotLeadUpdateSchema = z.object({
+  priority: z.enum(["low", "medium", "high", "urgent"]),
+});
+
+export const followUpDateSchema = z.object({
+  follow_up_date: z.string().nullable(),
+});
+
+export const quickNoteSchema = z.object({
+  quick_note: z.string().max(500).nullable(),
+});
