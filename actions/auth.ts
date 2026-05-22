@@ -86,13 +86,6 @@ export async function register(
   });
 
   if (error) {
-    if (error.message.toLowerCase().includes("already registered")) {
-      return {
-        status: "error",
-        error: "An account with this email already exists",
-        fieldErrors: { email: ["This email is already in use"] },
-      };
-    }
     return {
       status: "error",
       error: "Unable to create account. Please try again.",
@@ -169,6 +162,14 @@ export async function updatePassword(
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { status: "error", error: "Unauthorized" };
+  }
+
   const { error } = await supabase.auth.updateUser({
     password: parsed.data.password,
   });

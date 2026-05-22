@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const ALLOWED_REDIRECTS = ["/dashboard", "/update-password", "/settings"];
+
+function isSafeRedirect(next: string): boolean {
+  return (
+    next.startsWith("/") &&
+    !next.startsWith("//") &&
+    ALLOWED_REDIRECTS.some((allowed) => next === allowed || next.startsWith(allowed + "/"))
+  );
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const nextParam = searchParams.get("next") ?? "/dashboard";
+  const next = isSafeRedirect(nextParam) ? nextParam : "/dashboard";
 
   if (code) {
     const supabase = await createClient();
