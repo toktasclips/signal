@@ -170,26 +170,14 @@ export function LeadForm({ action, defaultValues, onSuccess }: LeadFormProps) {
         </div>
       </div>
 
-      {/* Quick note */}
+      {/* Note */}
       <div className="space-y-1.5">
-        <Label htmlFor="quick_note">Quick Note</Label>
-        <Input
+        <Label htmlFor="quick_note">Note</Label>
+        <Textarea
           id="quick_note"
           name="quick_note"
-          placeholder="One-liner for the hot list…"
-          defaultValue={defaultValues?.quick_note ?? ""}
-          disabled={isPending}
-        />
-      </div>
-
-      {/* Notes */}
-      <div className="space-y-1.5">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          name="notes"
           placeholder="Any context about this lead…"
-          defaultValue={defaultValues?.notes ?? ""}
+          defaultValue={defaultValues?.quick_note ?? defaultValues?.notes ?? ""}
           disabled={isPending}
           className="h-20"
         />
