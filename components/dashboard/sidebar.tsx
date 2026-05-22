@@ -31,10 +31,9 @@ const navItems = [
     soon: true,
   },
   {
-    label: "Contacts",
-    href: "/contacts",
+    label: "Leads",
+    href: "/leads",
     icon: Users,
-    soon: true,
   },
   {
     label: "Calendar",
