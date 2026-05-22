@@ -31,25 +31,32 @@ export function PipelineSnapshot({
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-border bg-card px-4 py-3">
-          <p className="text-[11px] text-muted-foreground mb-0.5">Open Pipeline</p>
-          <p className="text-base font-semibold text-foreground tabular-nums">
-            {openValue > 0 ? formatValueTL(openValue) : "—"}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-card px-4 py-3">
-          <p className="text-[11px] text-muted-foreground mb-0.5">Won Revenue</p>
-          <p className="text-base font-semibold text-foreground tabular-nums">
-            {wonRevenue > 0 ? formatValueTL(wonRevenue) : "—"}
-          </p>
-        </div>
-        <div className="rounded-xl border border-border bg-card px-4 py-3">
-          <p className="text-[11px] text-muted-foreground mb-0.5">Open Opps</p>
-          <p className="text-base font-semibold text-foreground tabular-nums">
-            {openOpportunities}
-          </p>
-        </div>
+        <SnapCard
+          label="Open Pipeline"
+          value={openValue > 0 ? formatValueTL(openValue) : "—"}
+        />
+        <SnapCard
+          label="Won Revenue"
+          value={wonRevenue > 0 ? formatValueTL(wonRevenue) : "—"}
+        />
+        <SnapCard
+          label="Open Opps"
+          value={String(openOpportunities)}
+        />
       </div>
     </section>
+  );
+}
+
+function SnapCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 py-3.5">
+      <p className="text-[11px] font-medium text-muted-foreground mb-1">
+        {label}
+      </p>
+      <p className="text-base font-bold text-foreground tabular-nums leading-tight">
+        {value}
+      </p>
+    </div>
   );
 }
