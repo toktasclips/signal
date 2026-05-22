@@ -10,6 +10,22 @@ export type CampaignType =
   | "Email"
   | "Other";
 
+export type TaskStatus = "todo" | "in_progress" | "completed";
+
+export interface Task {
+  id: string;
+  user_id: string;
+  lead_id: string | null;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: LeadPriority;
+  due_date: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Campaign {
   id: string;
   user_id: string;

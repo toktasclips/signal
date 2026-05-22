@@ -9,6 +9,7 @@ import {
   Users,
   CalendarDays,
   Megaphone,
+  CheckSquare,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,11 @@ const navItems = [
     label: "Leads",
     href: "/leads",
     icon: Users,
+  },
+  {
+    label: "Tasks",
+    href: "/tasks",
+    icon: CheckSquare,
   },
   {
     label: "Calendar",

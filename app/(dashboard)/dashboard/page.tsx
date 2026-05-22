@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { TodayHotLeads } from "@/components/dashboard/today-hot-leads";
 import { PipelineSnapshot } from "@/components/dashboard/pipeline-snapshot";
 import { TopCampaigns } from "@/components/dashboard/top-campaigns";
-import type { Lead, LeadStatus } from "@/types";
+import { TodayTasks } from "@/components/dashboard/today-tasks";
+import type { Lead, LeadStatus, Task } from "@/types";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -29,14 +30,27 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: todayHotLeads } = await supabase
-    .from("leads")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("is_hot", true)
-    .order("priority", { ascending: false })
-    .order("follow_up_date", { ascending: true, nullsFirst: false })
-    .limit(5);
+  const today = new Date();
+  const todayStart = new Date(today.toDateString()).toISOString();
+
+  const [{ data: todayHotLeads }, { data: todayTasksRaw }] = await Promise.all([
+    supabase
+      .from("leads")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_hot", true)
+      .order("priority", { ascending: false })
+      .order("follow_up_date", { ascending: true, nullsFirst: false })
+      .limit(5),
+    supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", user.id)
+      .neq("status", "completed")
+      .lte("due_date", todayStart)
+      .order("priority", { ascending: false })
+      .limit(5),
+  ]);
 
   const [{ data: pipelineLeads }, { data: campaignsRaw }, { data: wonLeadsRaw }] =
     await Promise.all([
@@ -99,6 +113,9 @@ export default async function DashboardPage() {
 
       {/* Today's Hot Leads widget */}
       <TodayHotLeads leads={(todayHotLeads as Lead[]) ?? []} />
+
+      {/* Today's Tasks widget */}
+      <TodayTasks tasks={(todayTasksRaw as Task[]) ?? []} />
 
       {/* Top Campaigns */}
       <TopCampaigns campaigns={topCampaigns} />
