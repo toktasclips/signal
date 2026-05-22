@@ -1,23 +1,20 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { KanbanSquare, CalendarDays, ArrowRight } from "lucide-react";
+import { CalendarDays, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TodayHotLeads } from "@/components/dashboard/today-hot-leads";
-import type { Lead } from "@/types";
+import { PipelineSnapshot } from "@/components/dashboard/pipeline-snapshot";
+import type { Lead, LeadStatus } from "@/types";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
 
+const OPEN_STATUSES: LeadStatus[] = ["new", "contacted", "qualified", "offer_sent"];
+
 const overviewModules = [
-  {
-    icon: KanbanSquare,
-    label: "Pipeline",
-    description: "Visualize deals moving through each stage of your process.",
-    status: "Coming soon",
-  },
   {
     icon: CalendarDays,
     label: "Calendar",
@@ -39,6 +36,20 @@ export default async function DashboardPage() {
     .order("priority", { ascending: false })
     .order("follow_up_date", { ascending: true, nullsFirst: false })
     .limit(5);
+
+  const { data: pipelineLeads } = await supabase
+    .from("leads")
+    .select("status, value")
+    .eq("user_id", user.id);
+
+  const pl = (pipelineLeads ?? []) as { status: LeadStatus; value: number | null }[];
+  const openValue = pl
+    .filter((l) => OPEN_STATUSES.includes(l.status))
+    .reduce((sum, l) => sum + (l.value ?? 0), 0);
+  const wonRevenue = pl
+    .filter((l) => l.status === "won")
+    .reduce((sum, l) => sum + (l.value ?? 0), 0);
+  const openOpportunities = pl.filter((l) => OPEN_STATUSES.includes(l.status)).length;
 
   const firstName =
     (user.user_metadata?.full_name as string)?.split(" ")[0] ||
@@ -63,6 +74,13 @@ export default async function DashboardPage() {
 
       {/* Today's Hot Leads widget */}
       <TodayHotLeads leads={(todayHotLeads as Lead[]) ?? []} />
+
+      {/* Pipeline Snapshot */}
+      <PipelineSnapshot
+        openValue={openValue}
+        wonRevenue={wonRevenue}
+        openOpportunities={openOpportunities}
+      />
 
       {/* Modules grid */}
       <section className="space-y-4">

@@ -21,6 +21,9 @@ export interface Lead {
   priority: LeadPriority;
   follow_up_date: string | null;
   quick_note: string | null;
+  closed_at: string | null;
+  lost_reason: string | null;
+  win_note: string | null;
   created_at: string;
   updated_at: string;
 }

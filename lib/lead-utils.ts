@@ -81,6 +81,15 @@ export function formatValue(value: number | null): string {
   }).format(value);
 }
 
+export function formatValueTL(value: number | null): string {
+  if (value === null) return "—";
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export function formatRelativeTime(dateStr: string | null): string {
   if (!dateStr) return "Never";
   const diff = Date.now() - new Date(dateStr).getTime();

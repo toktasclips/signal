@@ -1,0 +1,55 @@
+import Link from "next/link";
+import { ArrowRight, TrendingUp } from "lucide-react";
+import { formatValueTL } from "@/lib/lead-utils";
+
+interface PipelineSnapshotProps {
+  openValue: number;
+  wonRevenue: number;
+  openOpportunities: number;
+}
+
+export function PipelineSnapshot({
+  openValue,
+  wonRevenue,
+  openOpportunities,
+}: PipelineSnapshotProps) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">
+            Pipeline Snapshot
+          </h2>
+        </div>
+        <Link
+          href="/pipeline"
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          View pipeline <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-[11px] text-muted-foreground mb-0.5">Open Pipeline</p>
+          <p className="text-base font-semibold text-foreground tabular-nums">
+            {openValue > 0 ? formatValueTL(openValue) : "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-[11px] text-muted-foreground mb-0.5">Won Revenue</p>
+          <p className="text-base font-semibold text-foreground tabular-nums">
+            {wonRevenue > 0 ? formatValueTL(wonRevenue) : "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-[11px] text-muted-foreground mb-0.5">Open Opps</p>
+          <p className="text-base font-semibold text-foreground tabular-nums">
+            {openOpportunities}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}

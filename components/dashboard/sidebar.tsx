@@ -27,7 +27,6 @@ const navItems = [
     label: "Pipeline",
     href: "/pipeline",
     icon: KanbanSquare,
-    soon: true,
   },
   {
     label: "Leads",
