@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, memo } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Pencil, CheckCircle, XCircle, CalendarDays } from "lucide-react";
@@ -36,7 +36,7 @@ interface PipelineCardProps {
   isDragOverlay?: boolean;
 }
 
-export function PipelineCard({
+export const PipelineCard = memo(function PipelineCard({
   lead,
   onEdit,
   onMarkWon,
@@ -221,4 +221,5 @@ export function PipelineCard({
       </div>
     </div>
   );
-}
+});
+PipelineCard.displayName = "PipelineCard";

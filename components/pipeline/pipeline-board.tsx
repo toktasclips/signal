@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -91,13 +91,25 @@ export function PipelineBoard({ leads }: PipelineBoardProps) {
     });
   };
 
-  const handleMarkWon = (lead: Lead) => setWonTarget(lead);
-  const handleMarkLost = (lead: Lead) => setLostTarget(lead);
+  const handleMarkWon = useCallback((lead: Lead) => setWonTarget(lead), []);
+  const handleMarkLost = useCallback((lead: Lead) => setLostTarget(lead), []);
 
-  const handleEdit = (lead: Lead) => {
+  const handleEdit = useCallback((lead: Lead) => {
     setEditLead(lead);
     setModalOpen(true);
-  };
+  }, []);
+
+  const grouped = useMemo(
+    () =>
+      COLUMNS.reduce(
+        (acc, status) => {
+          acc[status] = leads.filter((l) => l.status === status);
+          return acc;
+        },
+        {} as Record<LeadStatus, Lead[]>
+      ),
+    [leads]
+  );
 
   const handleConfirmWon = () => {
     if (!wonTarget) return;
@@ -131,7 +143,7 @@ export function PipelineBoard({ leads }: PipelineBoardProps) {
               <PipelineColumn
                 key={status}
                 status={status}
-                leads={leads.filter((l) => l.status === status)}
+                leads={grouped[status]}
                 onEdit={handleEdit}
                 onMarkWon={handleMarkWon}
                 onMarkLost={handleMarkLost}

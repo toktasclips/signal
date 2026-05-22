@@ -28,7 +28,9 @@ export default async function PipelinePage() {
 
   const { data: leads } = await supabase
     .from("leads")
-    .select("*")
+    .select(
+      "id, user_id, name, source, status, temperature, priority, value, follow_up_date, quick_note, is_hot, email, phone, last_contacted_at, created_at, updated_at, closed_at, win_note, lost_reason, notes, company"
+    )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

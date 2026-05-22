@@ -18,9 +18,8 @@ async function getAuthUser() {
   return { supabase, user };
 }
 
-function revalidateAll() {
+function revalidatePipeline() {
   revalidatePath("/pipeline");
-  revalidatePath("/leads");
   revalidatePath("/dashboard");
 }
 
@@ -41,7 +40,7 @@ export async function updateLeadStatus(
     .eq("user_id", user.id);
 
   if (error) return { status: "error", error: "Failed to update." };
-  revalidateAll();
+  revalidatePipeline();
   return { status: "success" };
 }
 
@@ -66,7 +65,7 @@ export async function markLeadWon(
     .eq("user_id", user.id);
 
   if (error) return { status: "error", error: "Failed to update." };
-  revalidateAll();
+  revalidatePipeline();
   return { status: "success" };
 }
 
@@ -91,7 +90,7 @@ export async function markLeadLost(
     .eq("user_id", user.id);
 
   if (error) return { status: "error", error: "Failed to update." };
-  revalidateAll();
+  revalidatePipeline();
   return { status: "success" };
 }
 
@@ -112,6 +111,6 @@ export async function updateLeadValue(
     .eq("user_id", user.id);
 
   if (error) return { status: "error", error: "Failed to update." };
-  revalidateAll();
+  revalidatePipeline();
   return { status: "success" };
 }

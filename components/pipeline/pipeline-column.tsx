@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { formatValueTL, STATUS_LABELS } from "@/lib/lead-utils";
@@ -57,7 +58,7 @@ interface PipelineColumnProps {
   activeId: string | null;
 }
 
-export function PipelineColumn({
+export const PipelineColumn = memo(function PipelineColumn({
   status,
   leads,
   onEdit,
@@ -132,4 +133,5 @@ export function PipelineColumn({
       </div>
     </div>
   );
-}
+});
+PipelineColumn.displayName = "PipelineColumn";
