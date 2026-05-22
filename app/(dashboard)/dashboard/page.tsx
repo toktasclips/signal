@@ -31,15 +31,13 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = new Date().toISOString().split("T")[0];
-
   const { data: todayHotLeads } = await supabase
     .from("leads")
     .select("*")
     .eq("user_id", user.id)
     .eq("is_hot", true)
-    .lte("follow_up_date", today)
     .order("priority", { ascending: false })
+    .order("follow_up_date", { ascending: true, nullsFirst: false })
     .limit(5);
 
   const firstName =

@@ -1,6 +1,7 @@
 "use client";
 
-import { Pencil, Trash2, Mail, Phone, Clock } from "lucide-react";
+import { useTransition } from "react";
+import { Pencil, Trash2, Mail, Phone, Clock, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -11,6 +12,7 @@ import {
   formatValue,
   formatRelativeTime,
 } from "@/lib/lead-utils";
+import { toggleHotLead } from "@/actions/hot-list";
 import type { Lead } from "@/types";
 
 interface LeadCardProps {
@@ -20,6 +22,8 @@ interface LeadCardProps {
 }
 
 export function LeadCard({ lead, onEdit, onDelete }: LeadCardProps) {
+  const [isPending, startTransition] = useTransition();
+
   const initials = lead.name
     .split(" ")
     .map((n) => n[0])
@@ -27,8 +31,16 @@ export function LeadCard({ lead, onEdit, onDelete }: LeadCardProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  const handleToggleHot = () => {
+    startTransition(async () => { await toggleHotLead(lead.id, lead.is_hot); });
+  };
+
   return (
-    <div className="group flex items-start gap-4 rounded-xl border border-border bg-card px-5 py-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+    <div className={cn(
+      "group flex items-start gap-4 rounded-xl border bg-card px-5 py-4 shadow-card transition-shadow duration-200 hover:shadow-card-hover",
+      isPending && "opacity-60",
+      lead.is_hot ? "border-border" : "border-border"
+    )}>
       {/* Avatar */}
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/8 text-xs font-semibold text-primary">
         {initials}
@@ -77,24 +89,37 @@ export function LeadCard({ lead, onEdit, onDelete }: LeadCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onEdit(lead)}
-          aria-label="Edit lead"
+      <div className="flex shrink-0 items-center gap-1">
+        {/* Hot toggle — always visible */}
+        <button
+          onClick={handleToggleHot}
+          disabled={isPending}
+          title={lead.is_hot ? "Remove from hot list" : "Add to hot list"}
+          className={cn(
+            "flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
+            lead.is_hot
+              ? "text-red-500 bg-red-50"
+              : "text-muted-foreground/30 hover:text-red-400 hover:bg-red-50 opacity-0 group-hover:opacity-100"
+          )}
         >
-          <Pencil className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => onDelete(lead)}
-          aria-label="Delete lead"
-          className="text-muted-foreground hover:text-destructive hover:bg-destructive/8"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+          <Flame className="h-3.5 w-3.5" />
+        </button>
+
+        {/* Edit + Delete — hover only */}
+        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <Button variant="ghost" size="icon-sm" onClick={() => onEdit(lead)} aria-label="Edit lead">
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onDelete(lead)}
+            aria-label="Delete lead"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/8"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   );
