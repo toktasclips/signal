@@ -9,13 +9,12 @@ datasource db {
 }
 
 // ─── Auth Extension ───────────────────────────────────────────────────────────
-// Extends Supabase auth.users with application-level profile data.
-// Row Level Security is managed at the Supabase level.
-// Every insert/update must match the authenticated user's UID.
+// profiles.id = auth.users.id (one-to-one).
+// Row Level Security enforced at Supabase level.
+// Profile rows are created by the handle_new_user() DB trigger — never by Prisma directly.
 
 model Profile {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @db.Uuid
+  id        String   @id @db.Uuid
   email     String   @unique
   fullName  String?  @map("full_name")
   avatarUrl String?  @map("avatar_url")
