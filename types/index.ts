@@ -1,5 +1,27 @@
 export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
 
+export type CampaignType =
+  | "Instagram Ad"
+  | "Workshop"
+  | "YouTube"
+  | "Referral"
+  | "Organic Content"
+  | "Webinar"
+  | "Email"
+  | "Other";
+
+export interface Campaign {
+  id: string;
+  user_id: string;
+  name: string;
+  type: CampaignType;
+  source: string | null;
+  budget: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type LeadStatus = "new" | "contacted" | "qualified" | "offer_sent" | "won" | "lost";
 export type LeadTemperature = "cold" | "warm" | "hot" | "ready";
 export type LeadPriority = "low" | "medium" | "high" | "urgent";
@@ -24,6 +46,7 @@ export interface Lead {
   closed_at: string | null;
   lost_reason: string | null;
   win_note: string | null;
+  campaign_id: string | null;
   created_at: string;
   updated_at: string;
 }

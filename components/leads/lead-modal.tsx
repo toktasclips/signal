@@ -9,19 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { LeadForm } from "./lead-form";
 import { createLead, updateLead } from "@/actions/lead";
-import type { Lead } from "@/types";
+import type { Campaign, Lead } from "@/types";
 
 interface LeadModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lead?: Lead | null;
+  campaigns?: Campaign[];
 }
 
-export function LeadModal({ open, onOpenChange, lead }: LeadModalProps) {
+export function LeadModal({ open, onOpenChange, lead, campaigns }: LeadModalProps) {
   const isEdit = !!lead;
-  const action = isEdit
-    ? updateLead.bind(null, lead.id)
-    : createLead;
+  const action = isEdit ? updateLead.bind(null, lead.id) : createLead;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -37,6 +36,7 @@ export function LeadModal({ open, onOpenChange, lead }: LeadModalProps) {
         <LeadForm
           action={action}
           defaultValues={lead ?? undefined}
+          campaigns={campaigns}
           onSuccess={() => onOpenChange(false)}
         />
       </DialogContent>

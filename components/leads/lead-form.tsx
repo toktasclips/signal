@@ -7,17 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import type { ActionState, Lead } from "@/types";
+import type { ActionState, Campaign, Lead } from "@/types";
 
 interface LeadFormProps {
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
   defaultValues?: Partial<Lead>;
+  campaigns?: Campaign[];
   onSuccess: () => void;
 }
 
 const initialState: ActionState = { status: "idle" };
 
-export function LeadForm({ action, defaultValues, onSuccess }: LeadFormProps) {
+export function LeadForm({ action, defaultValues, campaigns, onSuccess }: LeadFormProps) {
   const [state, formAction, isPending] = useActionState(
     async (prevState: ActionState, formData: FormData) => {
       const result = await action(prevState, formData);
@@ -182,6 +183,26 @@ export function LeadForm({ action, defaultValues, onSuccess }: LeadFormProps) {
           className="h-20"
         />
       </div>
+
+      {/* Campaign */}
+      {campaigns && campaigns.length > 0 && (
+        <div className="space-y-1.5">
+          <Label htmlFor="campaign_id">Campaign</Label>
+          <Select
+            id="campaign_id"
+            name="campaign_id"
+            defaultValue={defaultValues?.campaign_id ?? ""}
+            disabled={isPending}
+          >
+            <option value="">No campaign</option>
+            {campaigns.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
 
       {/* Submit */}
       <div className="pt-2">

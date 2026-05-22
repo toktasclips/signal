@@ -27,7 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Lead, LeadStatus } from "@/types";
+import type { Campaign, Lead, LeadStatus } from "@/types";
 
 const COLUMNS: LeadStatus[] = [
   "new",
@@ -40,9 +40,10 @@ const COLUMNS: LeadStatus[] = [
 
 interface PipelineBoardProps {
   leads: Lead[];
+  campaigns?: Campaign[];
 }
 
-export function PipelineBoard({ leads }: PipelineBoardProps) {
+export function PipelineBoard({ leads, campaigns }: PipelineBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -179,6 +180,7 @@ export function PipelineBoard({ leads }: PipelineBoardProps) {
           if (!open) setEditLead(null);
         }}
         lead={editLead}
+        campaigns={campaigns}
       />
 
       {/* Won Dialog */}

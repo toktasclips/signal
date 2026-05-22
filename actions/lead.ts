@@ -31,6 +31,7 @@ export async function createLead(
   if (error) return { status: "error", error: "Failed to create lead. Please try again." };
 
   revalidatePath("/leads");
+  revalidatePath("/campaigns");
   return { status: "success", message: "Lead created." };
 }
 
@@ -62,6 +63,7 @@ export async function updateLead(
   if (error) return { status: "error", error: "Failed to update lead. Please try again." };
 
   revalidatePath("/leads");
+  revalidatePath("/campaigns");
   return { status: "success", message: "Lead updated." };
 }
 

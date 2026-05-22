@@ -1,0 +1,138 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { campaignSchema, assignLeadSchema } from "@/lib/validations/campaign";
+import type { ActionState } from "@/types";
+
+async function getAuthUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return { supabase, user };
+}
+
+function revalidateAll() {
+  revalidatePath("/campaigns");
+  revalidatePath("/dashboard");
+}
+
+export async function createCampaign(
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const raw = {
+    name: formData.get("name"),
+    type: formData.get("type"),
+    source: formData.get("source"),
+    budget: formData.get("budget"),
+    notes: formData.get("notes"),
+  };
+
+  const parsed = campaignSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Validation failed.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { error } = await supabase.from("campaigns").insert({
+    ...parsed.data,
+    user_id: user.id,
+  });
+
+  if (error) return { status: "error", error: "Failed to create campaign." };
+  revalidateAll();
+  return { status: "success" };
+}
+
+export async function updateCampaign(
+  id: string,
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const raw = {
+    name: formData.get("name"),
+    type: formData.get("type"),
+    source: formData.get("source"),
+    budget: formData.get("budget"),
+    notes: formData.get("notes"),
+  };
+
+  const parsed = campaignSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Validation failed.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { error } = await supabase
+    .from("campaigns")
+    .update(parsed.data)
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return { status: "error", error: "Failed to update campaign." };
+  revalidateAll();
+  return { status: "success" };
+}
+
+export async function deleteCampaign(id: string): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return { status: "error", error: "Failed to delete campaign." };
+  revalidateAll();
+  revalidatePath("/leads");
+  revalidatePath("/pipeline");
+  return { status: "success" };
+}
+
+export async function assignLeadToCampaign(
+  leadId: string,
+  campaignId: string | null
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const parsed = assignLeadSchema.safeParse({ campaign_id: campaignId });
+  if (!parsed.success) return { status: "error", error: "Invalid campaign." };
+
+  if (campaignId) {
+    const { data: campaign } = await supabase
+      .from("campaigns")
+      .select("id")
+      .eq("id", campaignId)
+      .eq("user_id", user.id)
+      .single();
+    if (!campaign) return { status: "error", error: "Campaign not found." };
+  }
+
+  const { error } = await supabase
+    .from("leads")
+    .update({ campaign_id: parsed.data.campaign_id })
+    .eq("id", leadId)
+    .eq("user_id", user.id);
+
+  if (error) return { status: "error", error: "Failed to assign." };
+  revalidatePath("/campaigns");
+  revalidatePath("/leads");
+  return { status: "success" };
+}

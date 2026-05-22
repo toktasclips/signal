@@ -8,6 +8,7 @@ import {
   KanbanSquare,
   Users,
   CalendarDays,
+  Megaphone,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,11 @@ const navItems = [
     label: "Pipeline",
     href: "/pipeline",
     icon: KanbanSquare,
+  },
+  {
+    label: "Campaigns",
+    href: "/campaigns",
+    icon: Megaphone,
   },
   {
     label: "Leads",

@@ -4,8 +4,13 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LeadModal } from "@/components/leads/lead-modal";
+import type { Campaign } from "@/types";
 
-export function PipelineHeaderActions() {
+interface PipelineHeaderActionsProps {
+  campaigns?: Campaign[];
+}
+
+export function PipelineHeaderActions({ campaigns }: PipelineHeaderActionsProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -14,7 +19,7 @@ export function PipelineHeaderActions() {
         <Plus className="h-4 w-4" />
         New Lead
       </Button>
-      <LeadModal open={modalOpen} onOpenChange={setModalOpen} />
+      <LeadModal open={modalOpen} onOpenChange={setModalOpen} campaigns={campaigns} />
     </>
   );
 }

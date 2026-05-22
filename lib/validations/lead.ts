@@ -25,6 +25,7 @@ export const leadSchema = z.object({
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
   follow_up_date: z.string().optional().nullable().transform((v) => v || null),
   quick_note: optStr(500),
+  campaign_id: z.string().uuid().optional().nullable().transform((v) => v || null),
 });
 
 export type LeadInput = z.infer<typeof leadSchema>;

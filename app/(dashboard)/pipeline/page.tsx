@@ -6,7 +6,7 @@ import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 import { PipelineHeaderActions } from "@/components/pipeline/pipeline-header-actions";
 import { formatValueTL } from "@/lib/lead-utils";
 import { cn } from "@/lib/utils";
-import type { Lead, LeadStatus } from "@/types";
+import type { Campaign, Lead, LeadStatus } from "@/types";
 
 export const metadata: Metadata = {
   title: "Pipeline",
@@ -26,24 +26,29 @@ export default async function PipelinePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: leads } = await supabase
-    .from("leads")
-    .select(
-      "id, user_id, name, source, status, temperature, priority, value, follow_up_date, quick_note, is_hot, email, phone, last_contacted_at, created_at, updated_at, closed_at, win_note, lost_reason, notes, company"
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: leadsData }, { data: campaignsData }] = await Promise.all([
+    supabase
+      .from("leads")
+      .select(
+        "id, user_id, name, source, status, temperature, priority, value, follow_up_date, quick_note, is_hot, email, phone, last_contacted_at, campaign_id, created_at, updated_at, closed_at, win_note, lost_reason, notes, company"
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("campaigns")
+      .select("id, name, type")
+      .eq("user_id", user.id)
+      .order("name"),
+  ]);
 
-  const allLeads = (leads as Lead[]) ?? [];
+  const allLeads = (leadsData as Lead[]) ?? [];
+  const campaigns = (campaignsData as Campaign[]) ?? [];
 
   const openLeads = allLeads.filter((l) => OPEN_STATUSES.includes(l.status));
   const wonLeads = allLeads.filter((l) => l.status === "won");
   const lostLeads = allLeads.filter((l) => l.status === "lost");
 
-  const openPipelineValue = openLeads.reduce(
-    (sum, l) => sum + (l.value ?? 0),
-    0
-  );
+  const openPipelineValue = openLeads.reduce((sum, l) => sum + (l.value ?? 0), 0);
   const wonRevenue = wonLeads.reduce((sum, l) => sum + (l.value ?? 0), 0);
   const openOpportunities = openLeads.length;
   const closeRate =
@@ -65,7 +70,7 @@ export default async function PipelinePage() {
             Track every opportunity from first contact to closed sale.
           </p>
         </div>
-        <PipelineHeaderActions />
+        <PipelineHeaderActions campaigns={campaigns} />
       </div>
 
       {/* Metrics */}
@@ -122,7 +127,7 @@ export default async function PipelinePage() {
           </p>
         </div>
       ) : (
-        <PipelineBoard leads={allLeads} />
+        <PipelineBoard leads={allLeads} campaigns={campaigns} />
       )}
     </div>
   );
@@ -137,33 +142,17 @@ interface MetricCardProps {
   description?: string;
 }
 
-function MetricCard({
-  icon: Icon,
-  iconClass,
-  iconBg,
-  label,
-  value,
-  description,
-}: MetricCardProps) {
+function MetricCard({ icon: Icon, iconClass, iconBg, label, value, description }: MetricCardProps) {
   return (
     <div className="rounded-xl border border-border bg-card px-5 py-4 space-y-3">
-      <div
-        className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-lg",
-          iconBg
-        )}
-      >
+      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", iconBg)}>
         <Icon className={cn("h-4 w-4", iconClass)} />
       </div>
       <div>
-        <p className="text-2xl font-bold text-foreground tabular-nums leading-tight">
-          {value}
-        </p>
+        <p className="text-2xl font-bold text-foreground tabular-nums leading-tight">{value}</p>
         <p className="text-xs font-medium text-foreground/70 mt-0.5">{label}</p>
         {description && (
-          <p className="text-[11px] text-muted-foreground mt-0.5">
-            {description}
-          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
         )}
       </div>
     </div>

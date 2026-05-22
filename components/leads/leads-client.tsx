@@ -9,13 +9,14 @@ import { LeadCard } from "./lead-card";
 import { LeadModal } from "./lead-modal";
 import { DeleteDialog } from "./delete-dialog";
 import { LeadsEmptyState } from "./leads-empty-state";
-import type { Lead, LeadStatus, LeadTemperature } from "@/types";
+import type { Campaign, Lead, LeadStatus, LeadTemperature } from "@/types";
 
 interface LeadsClientProps {
   initialLeads: Lead[];
+  campaigns?: Campaign[];
 }
 
-export function LeadsClient({ initialLeads }: LeadsClientProps) {
+export function LeadsClient({ initialLeads, campaigns }: LeadsClientProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
   const [tempFilter, setTempFilter] = useState<LeadTemperature | "all">("all");
@@ -131,6 +132,7 @@ export function LeadsClient({ initialLeads }: LeadsClientProps) {
         open={modalOpen}
         onOpenChange={handleModalClose}
         lead={editLead}
+        campaigns={campaigns}
       />
 
       {deleteTarget && (

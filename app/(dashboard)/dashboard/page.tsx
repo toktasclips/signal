@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { TodayHotLeads } from "@/components/dashboard/today-hot-leads";
 import { PipelineSnapshot } from "@/components/dashboard/pipeline-snapshot";
+import { TopCampaigns } from "@/components/dashboard/top-campaigns";
 import type { Lead, LeadStatus } from "@/types";
 
 export const metadata: Metadata = {
@@ -37,10 +38,20 @@ export default async function DashboardPage() {
     .order("follow_up_date", { ascending: true, nullsFirst: false })
     .limit(5);
 
-  const { data: pipelineLeads } = await supabase
-    .from("leads")
-    .select("status, value")
-    .eq("user_id", user.id);
+  const [{ data: pipelineLeads }, { data: campaignsRaw }, { data: wonLeadsRaw }] =
+    await Promise.all([
+      supabase.from("leads").select("status, value").eq("user_id", user.id),
+      supabase
+        .from("campaigns")
+        .select("id, name, type")
+        .eq("user_id", user.id),
+      supabase
+        .from("leads")
+        .select("campaign_id, value")
+        .eq("user_id", user.id)
+        .eq("status", "won")
+        .not("campaign_id", "is", null),
+    ]);
 
   const pl = (pipelineLeads ?? []) as { status: LeadStatus; value: number | null }[];
   const openValue = pl
@@ -50,6 +61,20 @@ export default async function DashboardPage() {
     .filter((l) => l.status === "won")
     .reduce((sum, l) => sum + (l.value ?? 0), 0);
   const openOpportunities = pl.filter((l) => OPEN_STATUSES.includes(l.status)).length;
+
+  const topCampaigns = (campaignsRaw ?? [])
+    .map((c) => {
+      const cWonLeads = (wonLeadsRaw ?? []).filter((l) => l.campaign_id === c.id);
+      return {
+        id: c.id,
+        name: c.name,
+        type: c.type,
+        wonRevenue: cWonLeads.reduce((sum: number, l: { value: number | null }) => sum + (l.value ?? 0), 0),
+        leadCount: (wonLeadsRaw ?? []).filter((l) => l.campaign_id === c.id).length,
+      };
+    })
+    .sort((a, b) => b.wonRevenue - a.wonRevenue)
+    .slice(0, 3);
 
   const firstName =
     (user.user_metadata?.full_name as string)?.split(" ")[0] ||
@@ -74,6 +99,9 @@ export default async function DashboardPage() {
 
       {/* Today's Hot Leads widget */}
       <TodayHotLeads leads={(todayHotLeads as Lead[]) ?? []} />
+
+      {/* Top Campaigns */}
+      <TopCampaigns campaigns={topCampaigns} />
 
       {/* Pipeline Snapshot */}
       <PipelineSnapshot
