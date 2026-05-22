@@ -170,21 +170,6 @@ export function LeadForm({ action, defaultValues, onSuccess }: LeadFormProps) {
         </div>
       </div>
 
-      {/* Hot toggle */}
-      <div className="flex items-center gap-2">
-        <input
-          id="is_hot"
-          name="is_hot"
-          type="checkbox"
-          defaultChecked={defaultValues?.is_hot ?? false}
-          disabled={isPending}
-          className="h-4 w-4 rounded border-border accent-primary cursor-pointer"
-        />
-        <Label htmlFor="is_hot" className="cursor-pointer font-normal">
-          Mark as hot lead
-        </Label>
-      </div>
-
       {/* Quick note */}
       <div className="space-y-1.5">
         <Label htmlFor="quick_note">Quick Note</Label>
