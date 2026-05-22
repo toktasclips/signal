@@ -54,10 +54,6 @@ export function LeadCard({ lead, onEdit, onDelete }: LeadCardProps) {
 
         {/* Row 2: meta */}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {lead.company && <span className="font-medium text-foreground/70">{lead.company}</span>}
-          {lead.company && (lead.source || lead.email || lead.phone) && (
-            <span className="text-border">·</span>
-          )}
           {lead.source && <span>{lead.source}</span>}
           {lead.email && (
             <span className="flex items-center gap-1">

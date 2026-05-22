@@ -54,30 +54,18 @@ export function LeadForm({ action, defaultValues, onSuccess }: LeadFormProps) {
         {field("name") && <p className="text-xs text-destructive">{field("name")}</p>}
       </div>
 
-      {/* Company + Email */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="company">Company</Label>
-          <Input
-            id="company"
-            name="company"
-            placeholder="Acme Corp"
-            defaultValue={defaultValues?.company ?? ""}
-            disabled={isPending}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="jane@acme.com"
-            defaultValue={defaultValues?.email ?? ""}
-            disabled={isPending}
-          />
-          {field("email") && <p className="text-xs text-destructive">{field("email")}</p>}
-        </div>
+      {/* Email */}
+      <div className="space-y-1.5">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="jane@acme.com"
+          defaultValue={defaultValues?.email ?? ""}
+          disabled={isPending}
+        />
+        {field("email") && <p className="text-xs text-destructive">{field("email")}</p>}
       </div>
 
       {/* Phone + Source */}
@@ -87,20 +75,23 @@ export function LeadForm({ action, defaultValues, onSuccess }: LeadFormProps) {
           <Input
             id="phone"
             name="phone"
-            placeholder="+1 555 000 0000"
-            defaultValue={defaultValues?.phone ?? ""}
+            placeholder="+90 5XX XXX XX XX"
+            defaultValue={defaultValues?.phone ?? "+90 "}
             disabled={isPending}
           />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="source">Source</Label>
-          <Input
-            id="source"
-            name="source"
-            placeholder="Referral, LinkedIn…"
-            defaultValue={defaultValues?.source ?? ""}
-            disabled={isPending}
-          />
+          <Select id="source" name="source" defaultValue={defaultValues?.source ?? ""} disabled={isPending}>
+            <option value="">Select source…</option>
+            <option value="Referral">Referral</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="Website">Website</option>
+            <option value="Cold Outreach">Cold Outreach</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Event">Event</option>
+            <option value="Other">Other</option>
+          </Select>
         </div>
       </div>
 
