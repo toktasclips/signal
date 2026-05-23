@@ -10,10 +10,9 @@ export const taskSchema = z.object({
     .transform((v) => v || null),
   lead_id: z
     .string()
-    .uuid()
     .optional()
     .nullable()
-    .transform((v) => v || null),
+    .transform((v) => (v && v.length > 0 ? v : null)),
   status: z.enum(["todo", "in_progress", "completed"]).default("todo"),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
   due_date: z
