@@ -1,106 +1,324 @@
-"use client"
+import { getMonthlyMetrics } from "@/lib/analytics/data"
+import { TURKISH_MONTHS } from "@/lib/analytics/mock-data"
+import { createClient } from "@/lib/supabase/server"
+import type { MonthlyMetric } from "@/lib/analytics/types"
+import type { Metadata } from "next"
+import Link from "next/link"
+import { redirect } from "next/navigation"
 
-import { useState } from "react"
-import { mockQuarterReviews } from "@/lib/analytics/mock-data"
-import { CheckCircle, Loader2 } from "lucide-react"
+export const metadata: Metadata = { title: "Quarter Review" }
 
-const QUARTER_MONTHS: Record<number, string> = {
-  1: "Ocak, Şubat, Mart",
-  2: "Nisan, Mayıs, Haziran",
-  3: "Temmuz, Ağustos, Eylül",
-  4: "Ekim, Kasım, Aralık",
-}
-const YEAR = 2024
+type ReviewSection = "wins" | "bottlenecks" | "opportunities" | "next_focus"
 
-interface QuarterData { wins: string; bottlenecks: string; opportunities: string; next_focus: string }
-
-function buildInitialData(): Record<number, QuarterData> {
-  const result: Record<number, QuarterData> = {}
-  for (let q = 1; q <= 4; q++) {
-    const found = mockQuarterReviews.find((r) => r.quarter === q && r.year === YEAR)
-    result[q] = { wins: found?.wins ?? "", bottlenecks: found?.bottlenecks ?? "", opportunities: found?.opportunities ?? "", next_focus: found?.next_focus ?? "" }
-  }
-  return result
+interface QuarterGroup {
+  key: string
+  quarter: number
+  year: number
+  metrics: MonthlyMetric[]
 }
 
-const textareaClass = "w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm leading-relaxed text-foreground transition-colors placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/30"
-
-const sectionDefs = [
-  { key: "wins" as keyof QuarterData, label: "Kazanımlar", accent: "border-emerald-200/80 bg-emerald-50/25", iconColor: "text-emerald-700" },
-  { key: "bottlenecks" as keyof QuarterData, label: "Darboğazlar", accent: "border-amber-200/80 bg-amber-50/25", iconColor: "text-amber-700" },
-  { key: "opportunities" as keyof QuarterData, label: "Fırsatlar", accent: "border-border bg-card", iconColor: "text-primary" },
-  { key: "next_focus" as keyof QuarterData, label: "Sonraki Odak", accent: "border-border bg-card", iconColor: "text-muted-foreground" },
+const sectionDefs: Array<{
+  key: ReviewSection
+  label: string
+  accent: string
+  titleClass: string
+}> = [
+  {
+    key: "wins",
+    label: "Kazanımlar",
+    accent: "border-emerald-200/80 bg-emerald-50/25",
+    titleClass: "text-emerald-700",
+  },
+  {
+    key: "bottlenecks",
+    label: "Darboğazlar",
+    accent: "border-amber-200/80 bg-amber-50/25",
+    titleClass: "text-amber-700",
+  },
+  {
+    key: "opportunities",
+    label: "Fırsatlar",
+    accent: "border-border bg-card",
+    titleClass: "text-primary",
+  },
+  {
+    key: "next_focus",
+    label: "Sonraki Odak",
+    accent: "border-border bg-card",
+    titleClass: "text-muted-foreground",
+  },
 ]
 
-export default function QuarterReviewPage() {
-  const [activeQ, setActiveQ] = useState<number>(1)
-  const [data, setData] = useState<Record<number, QuarterData>>(buildInitialData)
-  const [saving, setSaving] = useState(false)
-  const [savedQ, setSavedQ] = useState<number | null>(null)
+const businessMetricKeys: Array<keyof MonthlyMetric> = [
+  "total_goal",
+  "new_deal_value",
+  "cash_collected",
+  "ad_spend",
+  "instagram_reach",
+  "instagram_impressions",
+  "roas",
+  "new_customers",
+  "instagram_followers",
+  "engagement",
+  "youtube_subscribers",
+  "youtube_watch_hours",
+  "email_list",
+  "software_expenses",
+]
 
-  const handleChange = (quarter: number, field: keyof QuarterData, value: string) => {
-    setData((prev) => ({ ...prev, [quarter]: { ...prev[quarter], [field]: value } }))
-    setSavedQ(null)
+function hasBusinessData(metric: MonthlyMetric): boolean {
+  return businessMetricKeys.some(
+    (key) => metric[key] !== null && metric[key] !== undefined
+  )
+}
+
+function quarterOf(month: number): number {
+  return Math.ceil(month / 3)
+}
+
+function groupByQuarter(metrics: MonthlyMetric[]): QuarterGroup[] {
+  const groups = new Map<string, QuarterGroup>()
+
+  for (const metric of metrics) {
+    const quarter = quarterOf(metric.month)
+    const key = `${metric.year}-Q${quarter}`
+    const group =
+      groups.get(key) ??
+      { key, quarter, year: metric.year, metrics: [] }
+    group.metrics.push(metric)
+    groups.set(key, group)
   }
 
-  const handleSave = async () => {
-    setSaving(true)
-    await new Promise((resolve) => setTimeout(resolve, 900))
-    setSaving(false)
-    setSavedQ(activeQ)
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      metrics: group.metrics.sort((a, b) => a.month - b.month),
+    }))
+    .sort((a, b) =>
+      a.year !== b.year ? a.year - b.year : a.quarter - b.quarter
+    )
+}
+
+function sum(metrics: MonthlyMetric[], key: keyof MonthlyMetric): number {
+  return metrics.reduce((total, metric) => total + Number(metric[key] ?? 0), 0)
+}
+
+function lastValue(metrics: MonthlyMetric[], key: keyof MonthlyMetric): number {
+  return Number(metrics[metrics.length - 1]?.[key] ?? 0)
+}
+
+function formatCurrency(value: number): string {
+  if (Math.abs(value) >= 1000) return `₺${(value / 1000).toFixed(0)}K`
+  return `₺${value.toLocaleString("tr-TR")}`
+}
+
+function formatNumber(value: number): string {
+  return value.toLocaleString("tr-TR")
+}
+
+function formatMonths(metrics: MonthlyMetric[]): string {
+  return metrics
+    .map((metric) => TURKISH_MONTHS[metric.month - 1])
+    .join(", ")
+}
+
+function pct(value: number): string {
+  return `%${value.toFixed(1)}`
+}
+
+function profitMargin(revenue: number, profit: number): number {
+  if (revenue === 0) return 0
+  return (profit / revenue) * 100
+}
+
+function buildReview(group: QuarterGroup): Record<ReviewSection, string[]> {
+  const { metrics } = group
+  const first = metrics[0]
+  const last = metrics[metrics.length - 1]
+  const revenue = sum(metrics, "cash_collected")
+  const profit = sum(metrics, "profit")
+  const adSpend = sum(metrics, "ad_spend")
+  const newDeal = sum(metrics, "new_deal_value")
+  const watchHours = sum(metrics, "youtube_watch_hours")
+  const customers = sum(metrics, "new_customers")
+  const avgRoas =
+    metrics.filter((metric) => metric.roas !== null).reduce(
+      (total, metric) => total + Number(metric.roas ?? 0),
+      0
+    ) / Math.max(1, metrics.filter((metric) => metric.roas !== null).length)
+  const margin = profitMargin(revenue, profit)
+  const followerGrowth =
+    Number(last.instagram_followers ?? 0) - Number(first.instagram_followers ?? 0)
+  const emailList = lastValue(metrics, "email_list")
+
+  const wins = [
+    `Toplam gelir ${formatCurrency(revenue)} olarak kaydedildi.`,
+    `Kâr ${formatCurrency(profit)} seviyesinde; kârlılık ${pct(margin)}.`,
+    avgRoas > 0
+      ? `Ortalama ROAS ${avgRoas.toFixed(2)}x seviyesinde.`
+      : "ROAS verisi henüz bu dönem için tamamlanmamış.",
+  ]
+
+  if (newDeal > 0) wins.push(`Yeni deal value toplamı ${formatCurrency(newDeal)}.`)
+  if (watchHours > 0) wins.push(`YouTube izlenme saati ${formatNumber(watchHours)} sa.`)
+  if (customers > 0) wins.push(`${formatNumber(customers)} yeni müşteri kaydı var.`)
+  if (followerGrowth > 0) wins.push(`Instagram takipçi artışı ${formatNumber(followerGrowth)}.`)
+
+  const bottlenecks = []
+  if (adSpend > 0 && avgRoas < 4) {
+    bottlenecks.push(`Reklam verimliliği baskıda: ${formatCurrency(adSpend)} harcamaya karşı ROAS ${avgRoas.toFixed(2)}x.`)
+  } else if (adSpend === 0) {
+    bottlenecks.push("Reklam harcaması kaydı eksik; dönem verimliliği tam okunamıyor.")
+  }
+  if (margin < 60 && revenue > 0) bottlenecks.push(`Kârlılık ${pct(margin)}; gider kalemleri ayrıca kontrol edilmeli.`)
+  if (customers === 0) bottlenecks.push("Yeni müşteri sayısı bu dönem için eksik veya 0 görünüyor.")
+  if (watchHours === 0) bottlenecks.push("Watch time verisi eksik; içerik etkisi okunamıyor.")
+  if (!last.instagram_followers) bottlenecks.push("Instagram takipçi sayısı dönem sonunda eksik.")
+  if (bottlenecks.length === 0) bottlenecks.push("Kritik darboğaz görünmüyor; mevcut ritim korunabilir.")
+
+  const opportunities = [
+    "Watch time ile toplam gelir ilişkisini kampanya ve içerik tarihleriyle beraber takip et.",
+    "Eksik aylık KPI alanlarını tamamlayarak trend analizini daha güvenilir hale getir.",
+  ]
+  if (avgRoas >= 6) opportunities.push("ROAS güçlü; çalışan reklam açısını ölçekleme fırsatı var.")
+  if (emailList > 0) opportunities.push(`Mail listesi ${formatNumber(emailList)} seviyesinde; satış kampanyaları için kullanılabilir.`)
+  if (adSpend > 0) opportunities.push("Reklam harcaması yüksek günlerde nakit tahsilat etkisini ayrıca ölç.")
+
+  const next_focus = [
+    "Bir sonraki dönemde toplam gelir, kâr ve kârlılık yüzdesini birlikte takip et.",
+    "KPI Girişi ekranından eksik müşteri, watch time ve takipçi verilerini tamamla.",
+  ]
+  if (avgRoas > 0) next_focus.push(`ROAS hedefini en az ${Math.max(4, Math.ceil(avgRoas))}x bandında koru.`)
+  if (watchHours > 0) next_focus.push("YouTube izlenme saatini gelirle beraber haftalık takip et.")
+
+  return { wins, bottlenecks, opportunities, next_focus }
+}
+
+function metricSummary(group: QuarterGroup) {
+  const revenue = sum(group.metrics, "cash_collected")
+  const profit = sum(group.metrics, "profit")
+  const adSpend = sum(group.metrics, "ad_spend")
+  return [
+    { label: "Toplam Gelir", value: formatCurrency(revenue) },
+    { label: "Kâr", value: formatCurrency(profit) },
+    { label: "Kârlılık", value: pct(profitMargin(revenue, profit)) },
+    { label: "Reklam Harcaması", value: formatCurrency(adSpend) },
+  ]
+}
+
+export default async function QuarterReviewPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ period?: string }>
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const allMetrics = await getMonthlyMetrics(user.id)
+  const metrics = allMetrics
+    .filter(hasBusinessData)
+    .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month))
+  const groups = groupByQuarter(metrics)
+  const params = await searchParams
+  const activeGroup =
+    groups.find((group) => group.key === params?.period) ??
+    groups[groups.length - 1]
+
+  if (!activeGroup) {
+    return (
+      <div className="min-h-full bg-background">
+        <div className="border-b border-border bg-background/95 px-6 py-6 backdrop-blur lg:px-10">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Quarter Review
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Henüz değerlendirilecek KPI kaydı yok.
+          </p>
+        </div>
+      </div>
+    )
   }
 
-  const currentData = data[activeQ]
+  const review = buildReview(activeGroup)
 
   return (
     <div className="min-h-full bg-background">
       <div className="border-b border-border bg-background/95 px-6 py-6 backdrop-blur lg:px-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Quarter Review</h1>
-        <p className="mt-1 text-sm text-muted-foreground">2024 çeyrek değerlendirmeleri</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Quarter Review
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          2025 Eylül başlangıcından itibaren gerçek KPI kayıtlarına göre dönem özeti.
+        </p>
       </div>
 
-      <div className="mx-auto max-w-4xl space-y-6 px-6 py-8">
-        <div className="flex w-fit gap-1 rounded-xl border border-border bg-card p-1 shadow-card">
-          {[1, 2, 3, 4].map((q) => (
-            <button key={q} onClick={() => { setActiveQ(q); setSavedQ(null) }} className={`rounded-lg px-5 py-2 text-sm font-medium transition-colors ${activeQ === q ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}>
-              Q{q}
-            </button>
-          ))}
+      <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
+        <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-card p-1 shadow-card">
+          {groups.map((group) => {
+            const active = group.key === activeGroup.key
+            return (
+              <Link
+                key={group.key}
+                href={`/quarter-review?period=${group.key}`}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                }`}
+              >
+                Q{group.quarter} {group.year}
+              </Link>
+            )
+          })}
         </div>
 
         <div className="rounded-xl border border-border bg-card px-5 py-4 shadow-card">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-foreground">Q{activeQ} {YEAR}</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">{QUARTER_MONTHS[activeQ]}</p>
+              <h2 className="text-base font-semibold text-foreground">
+                Q{activeGroup.quarter} {activeGroup.year}
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {formatMonths(activeGroup.metrics)}
+              </p>
             </div>
-            <span className="rounded-md border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">{YEAR} · Çeyrek {activeQ}</span>
+            <span className="rounded-md border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+              {activeGroup.metrics.length} aylık kayıt
+            </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sectionDefs.map((section) => (
-            <div key={section.key} className={`flex flex-col gap-3 rounded-xl border ${section.accent} p-5 shadow-card`}>
-              <div className="flex items-center gap-2">
-                <h3 className={`text-sm font-semibold ${section.iconColor}`}>{section.label}</h3>
-              </div>
-              <textarea rows={7} value={currentData[section.key]} onChange={(e) => handleChange(activeQ, section.key, e.target.value)} placeholder={`${section.label} için notlarınızı girin...`} className={textareaClass} />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {metricSummary(activeGroup).map((item) => (
+            <div key={item.label} className="rounded-xl border border-border bg-card px-4 py-3 shadow-card">
+              <p className="text-[11px] font-medium text-muted-foreground">{item.label}</p>
+              <p className="mt-1 text-lg font-semibold text-foreground tabular-nums">{item.value}</p>
             </div>
           ))}
         </div>
 
-        {savedQ === activeQ && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3">
-            <CheckCircle size={16} className="flex-shrink-0 text-emerald-700" />
-            <p className="text-sm font-medium text-emerald-700">Q{activeQ} {YEAR} verileri başarıyla kaydedildi.</p>
-          </div>
-        )}
-
-        <div className="flex justify-end pb-8">
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
-            {saving && <Loader2 size={15} className="animate-spin" />}
-            {saving ? "Kaydediliyor..." : "Kaydet"}
-          </button>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {sectionDefs.map((section) => (
+            <div
+              key={section.key}
+              className={`rounded-xl border ${section.accent} p-5 shadow-card`}
+            >
+              <h3 className={`mb-4 text-sm font-semibold ${section.titleClass}`}>
+                {section.label}
+              </h3>
+              <ul className="space-y-2">
+                {review[section.key].map((line) => (
+                  <li key={line} className="flex gap-2 text-sm leading-relaxed text-foreground">
+                    <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-current opacity-45" />
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </div>
     </div>
