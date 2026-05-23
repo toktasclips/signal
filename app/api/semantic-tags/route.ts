@@ -6,13 +6,13 @@ export async function GET(req: NextRequest) {
   if (!leadId) return NextResponse.json({ tags: [] });
 
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return NextResponse.json({ tags: [] }, { status: 401 });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ tags: [] }, { status: 401 });
 
   const { data } = await supabase
     .from("semantic_tags")
     .select("*")
-    .eq("user_id", session.user.id)
+    .eq("user_id", user.id)
     .eq("lead_id", leadId)
     .order("confidence", { ascending: false });
 
