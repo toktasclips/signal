@@ -208,7 +208,12 @@ export async function createCampaignCalendarItem(
     .from("campaign_calendar_items")
     .insert({ ...parsed.data, user_id: user.id });
 
-  if (error) return { status: "error", error: "Failed to create campaign plan." };
+  if (error) {
+    return {
+      status: "error",
+      error: `Failed to create campaign plan: ${error.message}`,
+    };
+  }
 
   trackEvent({
     userId: user.id,
@@ -261,7 +266,12 @@ export async function updateCampaignCalendarItem(
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) return { status: "error", error: "Failed to update campaign plan." };
+  if (error) {
+    return {
+      status: "error",
+      error: `Failed to update campaign plan: ${error.message}`,
+    };
+  }
 
   revalidateAll();
   return { status: "success" };

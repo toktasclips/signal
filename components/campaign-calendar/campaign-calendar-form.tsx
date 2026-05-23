@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,11 +30,44 @@ const STATUS_LABELS: Record<string, string> = {
   paused: "Beklemede",
 };
 
+interface FormValues {
+  title: string;
+  target_segment: string;
+  offer: string;
+  channel: string;
+  planned_date: string;
+  end_date: string;
+  expected_revenue: string;
+  status: string;
+  notes: string;
+}
+
 export function CampaignCalendarForm({
   action,
   defaultValues,
   onSuccess,
 }: CampaignCalendarFormProps) {
+  const initialValues = useMemo<FormValues>(
+    () => ({
+      title: defaultValues?.title ?? "",
+      target_segment: defaultValues?.target_segment ?? "",
+      offer: defaultValues?.offer ?? "",
+      channel: defaultValues?.channel ?? "Internal Upsell",
+      planned_date: defaultValues?.planned_date
+        ? defaultValues.planned_date.slice(0, 10)
+        : "",
+      end_date: defaultValues?.end_date ? defaultValues.end_date.slice(0, 10) : "",
+      expected_revenue:
+        defaultValues?.expected_revenue === null ||
+        defaultValues?.expected_revenue === undefined
+          ? ""
+          : String(defaultValues.expected_revenue),
+      status: defaultValues?.status ?? "planned",
+      notes: defaultValues?.notes ?? "",
+    }),
+    [defaultValues]
+  );
+  const [values, setValues] = useState<FormValues>(initialValues);
   const [state, formAction, isPending] = useActionState(
     async (prevState: ActionState, formData: FormData) => {
       const result = await action(prevState, formData);
@@ -49,10 +82,9 @@ export function CampaignCalendarForm({
       ? state.fieldErrors[name][0]
       : null;
 
-  const plannedDate = defaultValues?.planned_date
-    ? defaultValues.planned_date.slice(0, 10)
-    : "";
-  const endDate = defaultValues?.end_date ? defaultValues.end_date.slice(0, 10) : "";
+  const setValue = (key: keyof FormValues, value: string) => {
+    setValues((current) => ({ ...current, [key]: value }));
+  };
 
   return (
     <form action={formAction} className="space-y-4 px-6 pb-2">
@@ -70,7 +102,8 @@ export function CampaignCalendarForm({
           id="title"
           name="title"
           placeholder="İçerideki müşterilere upsell teklifi"
-          defaultValue={defaultValues?.title ?? ""}
+          value={values.title}
+          onChange={(event) => setValue("title", event.target.value)}
           disabled={isPending}
           autoFocus
         />
@@ -86,7 +119,8 @@ export function CampaignCalendarForm({
             id="target_segment"
             name="target_segment"
             placeholder="Mevcut müşteriler, sıcak leadler..."
-            defaultValue={defaultValues?.target_segment ?? ""}
+            value={values.target_segment}
+            onChange={(event) => setValue("target_segment", event.target.value)}
             disabled={isPending}
           />
           {field("target_segment") && (
@@ -99,7 +133,8 @@ export function CampaignCalendarForm({
           <Select
             id="channel"
             name="channel"
-            defaultValue={defaultValues?.channel ?? "Internal Upsell"}
+            value={values.channel}
+            onChange={(event) => setValue("channel", event.target.value)}
             disabled={isPending}
           >
             {CAMPAIGN_CALENDAR_CHANNELS.map((channel) => (
@@ -119,7 +154,8 @@ export function CampaignCalendarForm({
           id="offer"
           name="offer"
           placeholder="Aylık abonelik, ek paket, özel indirim..."
-          defaultValue={defaultValues?.offer ?? ""}
+          value={values.offer}
+          onChange={(event) => setValue("offer", event.target.value)}
           disabled={isPending}
         />
         {field("offer") && <p className="text-xs text-destructive">{field("offer")}</p>}
@@ -134,7 +170,8 @@ export function CampaignCalendarForm({
             id="planned_date"
             name="planned_date"
             type="date"
-            defaultValue={plannedDate}
+            value={values.planned_date}
+            onChange={(event) => setValue("planned_date", event.target.value)}
             disabled={isPending}
           />
           {field("planned_date") && (
@@ -148,7 +185,8 @@ export function CampaignCalendarForm({
             id="end_date"
             name="end_date"
             type="date"
-            defaultValue={endDate}
+            value={values.end_date}
+            onChange={(event) => setValue("end_date", event.target.value)}
             disabled={isPending}
           />
           {field("end_date") && (
@@ -165,7 +203,8 @@ export function CampaignCalendarForm({
             min="0"
             step="100"
             placeholder="0"
-            defaultValue={defaultValues?.expected_revenue ?? ""}
+            value={values.expected_revenue}
+            onChange={(event) => setValue("expected_revenue", event.target.value)}
             disabled={isPending}
           />
           {field("expected_revenue") && (
@@ -179,7 +218,8 @@ export function CampaignCalendarForm({
         <Select
           id="status"
           name="status"
-          defaultValue={defaultValues?.status ?? "planned"}
+          value={values.status}
+          onChange={(event) => setValue("status", event.target.value)}
           disabled={isPending}
         >
           {CAMPAIGN_CALENDAR_STATUSES.map((status) => (
@@ -196,7 +236,8 @@ export function CampaignCalendarForm({
           id="notes"
           name="notes"
           placeholder="Mesaj açısı, teklif detayı, takip notları..."
-          defaultValue={defaultValues?.notes ?? ""}
+          value={values.notes}
+          onChange={(event) => setValue("notes", event.target.value)}
           disabled={isPending}
           className="h-24"
         />
