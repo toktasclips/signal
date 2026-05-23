@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { campaignSchema, assignLeadSchema } from "@/lib/validations/campaign";
+import {
+  assignLeadSchema,
+  campaignCalendarItemSchema,
+  campaignSchema,
+} from "@/lib/validations/campaign";
 import { trackEvent } from "@/lib/events/track";
 import type { ActionState } from "@/types";
 
@@ -14,6 +18,7 @@ async function getAuthUser() {
 
 function revalidateAll() {
   revalidatePath("/campaigns");
+  revalidatePath("/campaign-calendar");
   revalidatePath("/leads");
   revalidatePath("/activity");
 }
@@ -168,5 +173,112 @@ export async function assignLeadToCampaign(
 
   revalidatePath("/campaigns");
   revalidatePath("/leads");
+  return { status: "success" };
+}
+
+export async function createCampaignCalendarItem(
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const raw = {
+    title: formData.get("title"),
+    target_segment: formData.get("target_segment"),
+    offer: formData.get("offer"),
+    channel: formData.get("channel"),
+    planned_date: formData.get("planned_date"),
+    end_date: formData.get("end_date"),
+    expected_revenue: formData.get("expected_revenue"),
+    status: formData.get("status"),
+    notes: formData.get("notes"),
+  };
+
+  const parsed = campaignCalendarItemSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Validation failed.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { error } = await supabase
+    .from("campaign_calendar_items")
+    .insert({ ...parsed.data, user_id: user.id });
+
+  if (error) return { status: "error", error: "Failed to create campaign plan." };
+
+  trackEvent({
+    userId: user.id,
+    type: "campaign_calendar_created",
+    title: `Campaign plan scheduled: ${parsed.data.title}`,
+    description: `${parsed.data.channel} plan for ${parsed.data.target_segment} on ${parsed.data.planned_date}.`,
+    metadata: {
+      channel: parsed.data.channel,
+      status: parsed.data.status,
+      expected_revenue: parsed.data.expected_revenue,
+    },
+  });
+
+  revalidateAll();
+  return { status: "success" };
+}
+
+export async function updateCampaignCalendarItem(
+  id: string,
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const raw = {
+    title: formData.get("title"),
+    target_segment: formData.get("target_segment"),
+    offer: formData.get("offer"),
+    channel: formData.get("channel"),
+    planned_date: formData.get("planned_date"),
+    end_date: formData.get("end_date"),
+    expected_revenue: formData.get("expected_revenue"),
+    status: formData.get("status"),
+    notes: formData.get("notes"),
+  };
+
+  const parsed = campaignCalendarItemSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Validation failed.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { error } = await supabase
+    .from("campaign_calendar_items")
+    .update(parsed.data)
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return { status: "error", error: "Failed to update campaign plan." };
+
+  revalidateAll();
+  return { status: "success" };
+}
+
+export async function deleteCampaignCalendarItem(id: string): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("campaign_calendar_items")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return { status: "error", error: "Failed to delete campaign plan." };
+
+  revalidateAll();
   return { status: "success" };
 }

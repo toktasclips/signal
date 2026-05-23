@@ -38,6 +38,41 @@ export interface Campaign {
   updated_at: string;
 }
 
+export type CampaignCalendarStatus =
+  | "planned"
+  | "in_progress"
+  | "sent"
+  | "won"
+  | "lost"
+  | "paused";
+
+export type CampaignCalendarChannel =
+  | "Internal Upsell"
+  | "Email"
+  | "WhatsApp"
+  | "Instagram"
+  | "YouTube"
+  | "Webinar"
+  | "Platform Launch"
+  | "Referral"
+  | "Other";
+
+export interface CampaignCalendarItem {
+  id: string;
+  user_id: string;
+  title: string;
+  target_segment: string;
+  offer: string;
+  channel: CampaignCalendarChannel;
+  planned_date: string;
+  end_date: string | null;
+  expected_revenue: number | null;
+  status: CampaignCalendarStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type LeadStatus = "new" | "contacted" | "qualified" | "offer_sent" | "won" | "lost";
 export type LeadTemperature = "cold" | "warm" | "hot" | "ready";
 export type LeadPriority = "low" | "medium" | "high" | "urgent";
