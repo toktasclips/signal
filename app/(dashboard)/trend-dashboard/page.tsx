@@ -221,6 +221,10 @@ const metricLogGroups: Array<{
       { label: "Yeni Deal Value", key: "new_deal_value", format: "currency" },
       { label: "Toplam Gelir", key: "cash_collected", format: "currency" },
       { label: "Kâr", key: "profit", format: "currency" },
+      { label: "Stripe Brüt Gelir", key: "stripe_gross_revenue", format: "currency" },
+      { label: "Stripe Net Gelir", key: "stripe_net_revenue", format: "currency" },
+      { label: "Stripe Fee", key: "stripe_fees", format: "currency" },
+      { label: "Stripe Refund", key: "stripe_refunds", format: "currency" },
       { label: "Yazılım Harcamaları", key: "software_expenses", format: "currency" },
       { label: "Diğer Harcamalar", key: "other_expenses", format: "currency" },
     ],
@@ -261,6 +265,16 @@ function MetricLogPanel({ metric }: { metric: MonthlyMetric }) {
         title="Aylık Veri Logu"
         description={`${TURKISH_MONTHS[metric.month - 1]} ${metric.year} için girilen ham kayıtlar ve eksik alanlar.`}
       />
+      {metric.stripe_synced_at && (
+        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3">
+          <p className="text-sm font-medium text-emerald-700">
+            Stripe sync aktif: {metric.stripe_period_start} - {metric.stripe_period_end}
+          </p>
+          <p className="mt-0.5 text-xs text-emerald-700/80">
+            Son senkronizasyon: {new Date(metric.stripe_synced_at).toLocaleString("tr-TR")}
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {metricLogGroups.map((group) => (
           <div key={group.title} className="rounded-xl border border-border bg-card p-5 shadow-card">

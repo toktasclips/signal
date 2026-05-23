@@ -22,6 +22,14 @@ export interface MonthlyMetric {
   software_expenses: number | null
   other_expenses: number | null
   profit: number | null
+  stripe_gross_revenue?: number | null
+  stripe_net_revenue?: number | null
+  stripe_fees?: number | null
+  stripe_refunds?: number | null
+  stripe_charge_count?: number | null
+  stripe_synced_at?: string | null
+  stripe_period_start?: string | null
+  stripe_period_end?: string | null
   notes: string | null
   created_at: string
   updated_at: string
