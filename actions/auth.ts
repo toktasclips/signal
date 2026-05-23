@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { loginRatelimit, registerRatelimit } from "@/lib/ratelimit";
 import {
   loginSchema,
   registerSchema,
@@ -10,10 +12,25 @@ import {
 } from "@/lib/validations/auth";
 import type { ActionState } from "@/types";
 
+async function getIp(): Promise<string> {
+  const h = await headers();
+  return (
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
 export async function login(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const ip = await getIp();
+  const { success } = await loginRatelimit.limit(ip);
+  if (!success) {
+    return { status: "error", error: "Too many attempts. Please try again later." };
+  }
+
   const raw = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
@@ -54,6 +71,12 @@ export async function register(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const ip = await getIp();
+  const { success } = await registerRatelimit.limit(ip);
+  if (!success) {
+    return { status: "error", error: "Too many attempts. Please try again later." };
+  }
+
   const raw = {
     fullName: formData.get("fullName") as string,
     email: formData.get("email") as string,
