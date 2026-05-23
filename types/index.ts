@@ -67,6 +67,21 @@ export interface Lead {
   updated_at: string;
 }
 
+export type InsightSeverity = "info" | "warning" | "critical" | "success";
+
+export interface Insight {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  description: string;
+  severity: InsightSeverity;
+  is_read: boolean;
+  is_dismissed: boolean;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export interface UserProfile {
   id: string;
   userId: string;

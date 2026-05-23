@@ -1,90 +1,93 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CalendarDays, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { computeInsights, syncInsights } from "@/lib/insights/engine";
+import { IntelligenceFeed } from "@/components/insights/intelligence-feed";
+import { PriorityActions } from "@/components/insights/priority-actions";
 import { TodayHotLeads } from "@/components/dashboard/today-hot-leads";
 import { PipelineSnapshot } from "@/components/dashboard/pipeline-snapshot";
 import { TopCampaigns } from "@/components/dashboard/top-campaigns";
 import { TodayTasks } from "@/components/dashboard/today-tasks";
-import type { Lead, LeadStatus, Task } from "@/types";
+import type { Lead, LeadStatus, Task, Campaign } from "@/types";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
+export const metadata: Metadata = { title: "Dashboard" };
 
 const OPEN_STATUSES: LeadStatus[] = ["new", "contacted", "qualified", "offer_sent"];
-
-const overviewModules = [
-  {
-    icon: CalendarDays,
-    label: "Calendar",
-    description: "Schedule follow-ups and keep track of key touchpoints.",
-    status: "Coming soon",
-  },
-];
+const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = new Date();
-  const todayStart = new Date(today.toDateString()).toISOString();
-
-  const [{ data: todayHotLeads }, { data: todayTasksRaw }] = await Promise.all([
-    supabase
-      .from("leads")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_hot", true)
-      .order("priority", { ascending: false })
-      .order("follow_up_date", { ascending: true, nullsFirst: false })
-      .limit(5),
+  // Single round-trip: fetch everything we need
+  const [leadsRes, tasksRes, campaignsRes] = await Promise.all([
+    supabase.from("leads").select("*").eq("user_id", user.id),
     supabase
       .from("tasks")
       .select("*")
       .eq("user_id", user.id)
-      .neq("status", "completed")
-      .lte("due_date", todayStart)
-      .order("priority", { ascending: false })
-      .limit(5),
+      .neq("status", "completed"),
+    supabase.from("campaigns").select("*").eq("user_id", user.id),
   ]);
 
-  const [{ data: pipelineLeads }, { data: campaignsRaw }, { data: wonLeadsRaw }] =
-    await Promise.all([
-      supabase.from("leads").select("status, value").eq("user_id", user.id),
-      supabase
-        .from("campaigns")
-        .select("id, name, type")
-        .eq("user_id", user.id),
-      supabase
-        .from("leads")
-        .select("campaign_id, value")
-        .eq("user_id", user.id)
-        .eq("status", "won")
-        .not("campaign_id", "is", null),
-    ]);
+  const allLeads = (leadsRes.data ?? []) as Lead[];
+  const allTasks = (tasksRes.data ?? []) as Task[];
+  const allCampaigns = (campaignsRes.data ?? []) as Campaign[];
 
-  const pl = (pipelineLeads ?? []) as { status: LeadStatus; value: number | null }[];
-  const openValue = pl
+  // Compute + sync insights (rule engine)
+  const computed = computeInsights(allLeads, allTasks, allCampaigns);
+  const insights = await syncInsights(user.id, computed);
+
+  // Derived data for existing widgets
+  const now = new Date();
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  ).toISOString();
+
+  const todayHotLeads = allLeads
+    .filter((l) => l.is_hot)
+    .sort(
+      (a, b) =>
+        PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority] ||
+        (a.follow_up_date ?? "").localeCompare(b.follow_up_date ?? "")
+    )
+    .slice(0, 5);
+
+  const todayTasks = allTasks
+    .filter((t) => t.due_date && t.due_date <= todayStart)
+    .sort(
+      (a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
+    )
+    .slice(0, 5);
+
+  const openValue = allLeads
     .filter((l) => OPEN_STATUSES.includes(l.status))
-    .reduce((sum, l) => sum + (l.value ?? 0), 0);
-  const wonRevenue = pl
-    .filter((l) => l.status === "won")
-    .reduce((sum, l) => sum + (l.value ?? 0), 0);
-  const openOpportunities = pl.filter((l) => OPEN_STATUSES.includes(l.status)).length;
+    .reduce((s, l) => s + (l.value ?? 0), 0);
 
-  const topCampaigns = (campaignsRaw ?? [])
+  const wonRevenue = allLeads
+    .filter((l) => l.status === "won")
+    .reduce((s, l) => s + (l.value ?? 0), 0);
+
+  const openOpportunities = allLeads.filter((l) =>
+    OPEN_STATUSES.includes(l.status)
+  ).length;
+
+  const topCampaigns = allCampaigns
     .map((c) => {
-      const cWonLeads = (wonLeadsRaw ?? []).filter((l) => l.campaign_id === c.id);
+      const wonLeads = allLeads.filter(
+        (l) => l.campaign_id === c.id && l.status === "won"
+      );
       return {
         id: c.id,
         name: c.name,
         type: c.type,
-        wonRevenue: cWonLeads.reduce((sum: number, l: { value: number | null }) => sum + (l.value ?? 0), 0),
-        leadCount: (wonLeadsRaw ?? []).filter((l) => l.campaign_id === c.id).length,
+        wonRevenue: wonLeads.reduce((s, l) => s + (l.value ?? 0), 0),
+        leadCount: wonLeads.length,
       };
     })
     .sort((a, b) => b.wonRevenue - a.wonRevenue)
@@ -95,7 +98,7 @@ export default async function DashboardPage() {
     user.email?.split("@")[0] ||
     "there";
 
-  const hour = new Date().getHours();
+  const hour = now.getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
@@ -111,14 +114,11 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Today's Hot Leads widget */}
-      <TodayHotLeads leads={(todayHotLeads as Lead[]) ?? []} />
+      {/* Intelligence Feed */}
+      <IntelligenceFeed insights={insights} />
 
-      {/* Today's Tasks widget */}
-      <TodayTasks tasks={(todayTasksRaw as Task[]) ?? []} />
-
-      {/* Top Campaigns */}
-      <TopCampaigns campaigns={topCampaigns} />
+      {/* Priority Actions */}
+      <PriorityActions leads={allLeads} tasks={allTasks} />
 
       {/* Pipeline Snapshot */}
       <PipelineSnapshot
@@ -127,53 +127,14 @@ export default async function DashboardPage() {
         openOpportunities={openOpportunities}
       />
 
-      {/* Modules grid */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-foreground">Coming soon</h2>
-          <Badge variant="secondary" className="text-[11px]">
-            Roadmap
-          </Badge>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {overviewModules.map((mod) => (
-            <Card key={mod.label} className="group card-hover cursor-default overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/8 transition-colors group-hover:bg-primary/12">
-                    <mod.icon className="text-primary" style={{ height: "1.125rem", width: "1.125rem" }} />
-                  </div>
-                  <span className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-muted text-muted-foreground">
-                    {mod.status}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardTitle className="mb-1.5">{mod.label}</CardTitle>
-                <CardDescription className="text-xs leading-relaxed">
-                  {mod.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+      {/* Hot Leads + Tasks */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <TodayHotLeads leads={todayHotLeads} />
+        <TodayTasks tasks={todayTasks} />
+      </div>
 
-      {/* Activity */}
-      <section className="space-y-4">
-        <h2 className="text-sm font-medium text-foreground">Recent activity</h2>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-4">
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-sm font-medium text-foreground mb-1">No activity yet</p>
-            <p className="text-xs text-muted-foreground max-w-xs">
-              Once you start adding leads and moving deals, your activity will appear here.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+      {/* Top Campaigns */}
+      <TopCampaigns campaigns={topCampaigns} />
     </div>
   );
 }
