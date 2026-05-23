@@ -33,24 +33,26 @@ const kpiIcons = [
   <Youtube key="youtube" size={16} />,
 ]
 
+const businessMetricKeys: Array<keyof MonthlyMetric> = [
+  "total_goal",
+  "new_deal_value",
+  "monthly_recurring_revenue",
+  "cash_collected",
+  "ad_spend",
+  "instagram_reach",
+  "instagram_impressions",
+  "roas",
+  "new_customers",
+  "instagram_followers",
+  "engagement",
+  "youtube_subscribers",
+  "youtube_watch_hours",
+  "email_list",
+  "software_expenses",
+]
+
 function hasBusinessData(metric: MonthlyMetric): boolean {
-  return [
-    "total_goal",
-    "new_deal_value",
-    "monthly_recurring_revenue",
-    "cash_collected",
-    "ad_spend",
-    "instagram_reach",
-    "instagram_impressions",
-    "roas",
-    "new_customers",
-    "instagram_followers",
-    "engagement",
-    "youtube_subscribers",
-    "youtube_watch_hours",
-    "email_list",
-    "software_expenses",
-  ] satisfies Array<keyof MonthlyMetric>).some(
+  return businessMetricKeys.some(
     (key) => metric[key] !== null && metric[key] !== undefined
   )
 }
