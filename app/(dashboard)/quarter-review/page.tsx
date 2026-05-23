@@ -23,13 +23,13 @@ function buildInitialData(): Record<number, QuarterData> {
   return result
 }
 
-const textareaClass = "w-full bg-[#0A0A0A] border border-[#222222] text-zinc-100 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 transition-colors resize-none placeholder:text-zinc-700 leading-relaxed"
+const textareaClass = "w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm leading-relaxed text-foreground transition-colors placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/30"
 
 const sectionDefs = [
-  { key: "wins" as keyof QuarterData, label: "Kazanımlar", emoji: "✅", borderColor: "border-l-emerald-500", iconColor: "text-emerald-400" },
-  { key: "bottlenecks" as keyof QuarterData, label: "Darboğazlar", emoji: "🚧", borderColor: "border-l-amber-500", iconColor: "text-amber-400" },
-  { key: "opportunities" as keyof QuarterData, label: "Fırsatlar", emoji: "💡", borderColor: "border-l-violet-500", iconColor: "text-violet-400" },
-  { key: "next_focus" as keyof QuarterData, label: "Sonraki Odak", emoji: "🎯", borderColor: "border-l-blue-500", iconColor: "text-blue-400" },
+  { key: "wins" as keyof QuarterData, label: "Kazanımlar", accent: "border-emerald-200/80 bg-emerald-50/25", iconColor: "text-emerald-700" },
+  { key: "bottlenecks" as keyof QuarterData, label: "Darboğazlar", accent: "border-amber-200/80 bg-amber-50/25", iconColor: "text-amber-700" },
+  { key: "opportunities" as keyof QuarterData, label: "Fırsatlar", accent: "border-border bg-card", iconColor: "text-primary" },
+  { key: "next_focus" as keyof QuarterData, label: "Sonraki Odak", accent: "border-border bg-card", iconColor: "text-muted-foreground" },
 ]
 
 export default function QuarterReviewPage() {
@@ -53,36 +53,35 @@ export default function QuarterReviewPage() {
   const currentData = data[activeQ]
 
   return (
-    <div className="bg-[#0A0A0A] min-h-full">
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-sm border-b border-[#1A1A1A] px-6 py-4">
-        <h1 className="text-lg font-semibold text-zinc-100">Quarter Review</h1>
-        <p className="text-xs text-zinc-600 mt-0.5">2024 çeyrek değerlendirmeleri</p>
+    <div className="min-h-full bg-background">
+      <div className="border-b border-border bg-background/95 px-6 py-6 backdrop-blur lg:px-10">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Quarter Review</h1>
+        <p className="mt-1 text-sm text-muted-foreground">2024 çeyrek değerlendirmeleri</p>
       </div>
 
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
-        <div className="flex gap-2 p-1 bg-[#111111] border border-[#222222] rounded-xl w-fit">
+      <div className="mx-auto max-w-4xl space-y-6 px-6 py-8">
+        <div className="flex w-fit gap-1 rounded-xl border border-border bg-card p-1 shadow-card">
           {[1, 2, 3, 4].map((q) => (
-            <button key={q} onClick={() => { setActiveQ(q); setSavedQ(null) }} className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${activeQ === q ? "bg-violet-500 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300 hover:bg-[#161616]"}`}>
+            <button key={q} onClick={() => { setActiveQ(q); setSavedQ(null) }} className={`rounded-lg px-5 py-2 text-sm font-medium transition-colors ${activeQ === q ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"}`}>
               Q{q}
             </button>
           ))}
         </div>
 
-        <div className="bg-[#111111] border border-[#222222] rounded-xl px-5 py-4">
+        <div className="rounded-xl border border-border bg-card px-5 py-4 shadow-card">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-zinc-100">Q{activeQ} {YEAR}</h2>
-              <p className="text-xs text-zinc-600 mt-0.5">{QUARTER_MONTHS[activeQ]}</p>
+              <h2 className="text-base font-semibold text-foreground">Q{activeQ} {YEAR}</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">{QUARTER_MONTHS[activeQ]}</p>
             </div>
-            <span className="px-3 py-1 text-xs font-medium bg-[#1A1A1A] text-zinc-400 rounded-full border border-[#2A2A2A]">{YEAR} · Çeyrek {activeQ}</span>
+            <span className="rounded-md border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">{YEAR} · Çeyrek {activeQ}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sectionDefs.map((section) => (
-            <div key={section.key} className={`bg-[#111111] border border-[#222222] border-l-4 ${section.borderColor} rounded-xl p-5 flex flex-col gap-3`}>
+            <div key={section.key} className={`flex flex-col gap-3 rounded-xl border ${section.accent} p-5 shadow-card`}>
               <div className="flex items-center gap-2">
-                <span className="text-base leading-none">{section.emoji}</span>
                 <h3 className={`text-sm font-semibold ${section.iconColor}`}>{section.label}</h3>
               </div>
               <textarea rows={7} value={currentData[section.key]} onChange={(e) => handleChange(activeQ, section.key, e.target.value)} placeholder={`${section.label} için notlarınızı girin...`} className={textareaClass} />
@@ -91,14 +90,14 @@ export default function QuarterReviewPage() {
         </div>
 
         {savedQ === activeQ && (
-          <div className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-            <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
-            <p className="text-sm text-emerald-300 font-medium">Q{activeQ} {YEAR} verileri başarıyla kaydedildi.</p>
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3">
+            <CheckCircle size={16} className="flex-shrink-0 text-emerald-700" />
+            <p className="text-sm font-medium text-emerald-700">Q{activeQ} {YEAR} verileri başarıyla kaydedildi.</p>
           </div>
         )}
 
         <div className="flex justify-end pb-8">
-          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-violet-500 hover:bg-violet-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors">
+          <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
             {saving && <Loader2 size={15} className="animate-spin" />}
             {saving ? "Kaydediliyor..." : "Kaydet"}
           </button>

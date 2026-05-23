@@ -24,26 +24,26 @@ const initialState: FormState = {
 }
 
 const YEARS = [2022, 2023, 2024, 2025, 2026]
-const inputClass = "bg-[#0A0A0A] border border-[#222222] text-zinc-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500 w-full transition-colors placeholder:text-zinc-700"
-const labelClass = "text-xs text-zinc-400 mb-1 block"
+const inputClass = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/30"
+const labelClass = "mb-1 block text-xs text-muted-foreground"
 
 interface FieldConfig { key: keyof Omit<FormState, "month" | "year" | "notes">; label: string; step?: string; min?: string; placeholder?: string }
 interface SectionConfig { title: string; color: string; fields: FieldConfig[] }
 
 const sections: SectionConfig[] = [
-  { title: "Finansal", color: "text-emerald-400", fields: [
+  { title: "Finansal", color: "text-emerald-700", fields: [
     { key: "total_goal", label: "Hedef Gelir (₺)", step: "1000", min: "0", placeholder: "0" },
     { key: "new_deal_value", label: "Yeni Anlaşma Değeri (₺)", step: "1000", min: "0", placeholder: "0" },
     { key: "monthly_recurring_revenue", label: "MRR (₺)", step: "500", min: "0", placeholder: "0" },
     { key: "cash_collected", label: "Nakit Tahsilat (₺)", step: "1000", min: "0", placeholder: "0" },
     { key: "profit", label: "Kâr (₺)", step: "500", placeholder: "0" },
   ]},
-  { title: "Reklam", color: "text-amber-400", fields: [
+  { title: "Reklam", color: "text-amber-700", fields: [
     { key: "ad_spend", label: "Reklam Harcaması (₺)", step: "100", min: "0", placeholder: "0" },
     { key: "cpm", label: "CPM (₺)", step: "0.1", min: "0", placeholder: "0.00" },
     { key: "roas", label: "ROAS (x)", step: "0.1", min: "0", placeholder: "0.0" },
   ]},
-  { title: "Instagram", color: "text-pink-400", fields: [
+  { title: "Instagram", color: "text-primary", fields: [
     { key: "instagram_reach", label: "Reach", step: "100", min: "0", placeholder: "0" },
     { key: "instagram_impressions", label: "Gösterim", step: "100", min: "0", placeholder: "0" },
     { key: "new_customers", label: "Yeni Müşteri", step: "1", min: "0", placeholder: "0" },
@@ -51,11 +51,11 @@ const sections: SectionConfig[] = [
     { key: "engagement", label: "Etkileşim (%)", step: "0.1", min: "0", placeholder: "0.0" },
     { key: "profile_visits", label: "Profil Ziyareti", step: "10", min: "0", placeholder: "0" },
   ]},
-  { title: "YouTube", color: "text-red-400", fields: [
+  { title: "YouTube", color: "text-red-700", fields: [
     { key: "youtube_subscribers", label: "Abone", step: "10", min: "0", placeholder: "0" },
     { key: "youtube_watch_hours", label: "İzlenme Saati", step: "10", min: "0", placeholder: "0" },
   ]},
-  { title: "Diğer", color: "text-blue-400", fields: [
+  { title: "Diğer", color: "text-muted-foreground", fields: [
     { key: "shares", label: "Paylaşım", step: "1", min: "0", placeholder: "0" },
     { key: "email_list", label: "E-posta Listesi", step: "10", min: "0", placeholder: "0" },
     { key: "software_expenses", label: "Yazılım Giderleri (₺)", step: "50", min: "0", placeholder: "0" },
@@ -84,16 +84,16 @@ export default function KpiEntryPage() {
   }
 
   return (
-    <div className="bg-[#0A0A0A] min-h-full">
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-sm border-b border-[#1A1A1A] px-6 py-4">
-        <h1 className="text-lg font-semibold text-zinc-100">KPI Girişi</h1>
-        <p className="text-xs text-zinc-600 mt-0.5">Aylık metriklerinizi buradan girin</p>
+    <div className="min-h-full bg-background">
+      <div className="border-b border-border bg-background/95 px-6 py-6 backdrop-blur lg:px-10">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">KPI Girişi</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Aylık metriklerinizi buradan girin</p>
       </div>
 
-      <div className="p-6 max-w-3xl mx-auto">
+      <div className="mx-auto max-w-3xl px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-[#111111] border border-[#222222] rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-zinc-100 mb-4">Dönem Seçimi</h2>
+          <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+            <h2 className="mb-4 text-sm font-semibold text-foreground">Dönem Seçimi</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Ay</label>
@@ -109,9 +109,9 @@ export default function KpiEntryPage() {
               </div>
             </div>
             {existingEntry && (
-              <div className="mt-4 flex items-start gap-2 px-3 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                <AlertTriangle size={15} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-300">
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5">
+                <AlertTriangle size={15} className="mt-0.5 flex-shrink-0 text-amber-700" />
+                <p className="text-xs text-amber-700">
                   <span className="font-semibold">Uyarı:</span> {TURKISH_MONTHS[form.month - 1]} {form.year} için mevcut bir kayıt var. Kaydetmeniz durumunda üzerine yazılacak.
                 </p>
               </div>
@@ -119,10 +119,10 @@ export default function KpiEntryPage() {
           </div>
 
           {sections.map((section) => (
-            <div key={section.title} className="bg-[#111111] border border-[#222222] rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-5 pb-3 border-b border-[#1A1A1A]">
+            <div key={section.title} className="rounded-xl border border-border bg-card p-5 shadow-card">
+              <div className="mb-5 flex items-center gap-2 border-b border-border pb-3">
                 <h2 className={`text-sm font-semibold ${section.color}`}>{section.title}</h2>
-                <div className="flex-1 h-px bg-[#1A1A1A]" />
+                <div className="h-px flex-1 bg-border" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {section.fields.map((field) => (
@@ -135,10 +135,10 @@ export default function KpiEntryPage() {
             </div>
           ))}
 
-          <div className="bg-[#111111] border border-[#222222] rounded-xl p-5">
-            <div className="flex items-center gap-2 mb-5 pb-3 border-b border-[#1A1A1A]">
-              <h2 className="text-sm font-semibold text-zinc-400">Notlar</h2>
-              <div className="flex-1 h-px bg-[#1A1A1A]" />
+          <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+            <div className="mb-5 flex items-center gap-2 border-b border-border pb-3">
+              <h2 className="text-sm font-semibold text-foreground">Notlar</h2>
+              <div className="h-px flex-1 bg-border" />
             </div>
             <div>
               <label className={labelClass}>Bu ay hakkında notlarınız</label>
@@ -147,14 +147,14 @@ export default function KpiEntryPage() {
           </div>
 
           {success && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-              <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
-              <p className="text-sm text-emerald-300 font-medium">{TURKISH_MONTHS[form.month - 1]} {form.year} verileri başarıyla kaydedildi.</p>
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3">
+              <CheckCircle size={16} className="flex-shrink-0 text-emerald-700" />
+              <p className="text-sm font-medium text-emerald-700">{TURKISH_MONTHS[form.month - 1]} {form.year} verileri başarıyla kaydedildi.</p>
             </div>
           )}
 
           <div className="flex justify-end pb-8">
-            <button type="submit" disabled={loading} className="flex items-center gap-2 px-6 py-2.5 bg-violet-500 hover:bg-violet-600 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition-colors">
+            <button type="submit" disabled={loading} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
               {loading && <Loader2 size={15} className="animate-spin" />}
               {loading ? "Kaydediliyor..." : "Kaydet"}
             </button>

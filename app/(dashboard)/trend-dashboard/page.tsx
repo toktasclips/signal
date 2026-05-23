@@ -7,6 +7,7 @@ import { mockMetrics, TURKISH_MONTHS } from "@/lib/analytics/mock-data"
 import { buildChartData, calcKpiSummary } from "@/lib/analytics/calculations"
 import { DollarSign, TrendingUp, Target, Activity, Youtube } from "lucide-react"
 import type { Metadata } from "next"
+import type { ReactNode } from "react"
 
 export const metadata: Metadata = { title: "Trend Dashboard" }
 
@@ -48,21 +49,28 @@ export default function TrendDashboardPage() {
   }))
 
   return (
-    <div className="bg-[#0A0A0A] min-h-full">
-      <div className="sticky top-0 z-10 bg-[#0A0A0A]/90 backdrop-blur-sm border-b border-[#1A1A1A] px-6 py-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-zinc-100">Dashboard</h1>
-          <span className="px-2 py-0.5 text-xs rounded-full bg-violet-500/15 text-violet-400 font-medium">
+    <div className="min-h-full bg-background">
+      <div className="border-b border-border bg-background/95 px-6 py-6 backdrop-blur lg:px-10">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Trend Dashboard
+          </h1>
+          <span className="rounded-md border border-border bg-card px-2 py-0.5 text-xs font-medium text-muted-foreground shadow-card">
             {TURKISH_MONTHS[latestMetric.month - 1]} {latestMetric.year}
           </span>
         </div>
-        <p className="text-xs text-zinc-600 mt-0.5">Son güncelleme: Aralık 2024</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Son güncelleme: Aralık 2024
+        </p>
       </div>
 
-      <div className="p-6 space-y-6">
-        <div>
-          <h2 className="text-xs font-medium text-zinc-600 uppercase tracking-widest mb-3">Temel Metrikler</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="space-y-8 px-6 py-8 lg:px-10">
+        <section className="space-y-3">
+          <SectionHeader
+            title="Temel Metrikler"
+            description="Gelir, karlılık ve kanal performansı için executive görünüm."
+          />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             {kpiSummary.map((kpi, i) => (
               <KpiCard
                 key={kpi.key}
@@ -73,45 +81,76 @@ export default function TrendDashboardPage() {
               />
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div className="bg-[#111111] border border-[#222222] rounded-xl p-5">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-zinc-100">Gelir Trendi</h3>
-              <p className="text-xs text-zinc-600 mt-0.5">Aylık nakit tahsilat (2024)</p>
-            </div>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <ChartPanel
+            title="Gelir Trendi"
+            description="Aylık nakit tahsilat (2024)"
+          >
             <RevenueChart data={revenueData} />
-          </div>
-          <div className="bg-[#111111] border border-[#222222] rounded-xl p-5">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-zinc-100">Kâr Trendi</h3>
-              <p className="text-xs text-zinc-600 mt-0.5">Aylık net kâr (2024)</p>
-            </div>
+          </ChartPanel>
+          <ChartPanel
+            title="Kâr Trendi"
+            description="Aylık net kâr (2024)"
+          >
             <ProfitChart data={profitData} />
-          </div>
-          <div className="bg-[#111111] border border-[#222222] rounded-xl p-5">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-zinc-100">Reach vs Müşteri</h3>
-              <p className="text-xs text-zinc-600 mt-0.5">Instagram erişim ve yeni müşteri kazanımı</p>
-            </div>
+          </ChartPanel>
+          <ChartPanel
+            title="Reach vs Müşteri"
+            description="Instagram erişim ve yeni müşteri kazanımı"
+          >
             <ReachCustomersChart data={reachCustomersData} />
-          </div>
-          <div className="bg-[#111111] border border-[#222222] rounded-xl p-5">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-zinc-100">Watch Time vs MRR</h3>
-              <p className="text-xs text-zinc-600 mt-0.5">YouTube izlenme süresi ve aylık tekrarlayan gelir</p>
-            </div>
+          </ChartPanel>
+          <ChartPanel
+            title="Watch Time vs MRR"
+            description="YouTube izlenme süresi ve aylık tekrarlayan gelir"
+          >
             <WatchtimeChart data={watchtimeData} />
-          </div>
+          </ChartPanel>
         </div>
 
         <div className="text-center py-4 pb-8">
-          <p className="text-xs text-zinc-700">
+          <p className="text-xs text-muted-foreground">
             Veriler mock datadan yükleniyor — gerçek zamanlı Supabase entegrasyonu için KPI Girişi sayfasını kullanın.
           </p>
         </div>
       </div>
     </div>
+  )
+}
+
+function SectionHeader({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
+  return (
+    <div className="space-y-1">
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+
+function ChartPanel({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: ReactNode
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-card">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </section>
   )
 }

@@ -75,13 +75,13 @@ export function AnalyticsSidebar() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div
-        className={`flex items-center gap-2 px-4 py-5 border-b border-[#1A1A1A] ${
+        className={`flex items-center gap-2 border-b border-border px-4 py-5 ${
           collapsed ? "justify-center" : ""
         }`}
       >
-        <BarChart3 size={20} className="text-violet-400 flex-shrink-0" />
+        <BarChart3 size={20} className="flex-shrink-0 text-primary" />
         {!collapsed && (
-          <span className="text-violet-400 font-bold text-lg tracking-tight">
+          <span className="text-lg font-semibold tracking-tight text-foreground">
             Trend
           </span>
         )}
@@ -100,8 +100,8 @@ export function AnalyticsSidebar() {
                 collapsed ? "justify-center" : ""
               } ${
                 active
-                  ? "bg-[#1A1A1A] text-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-300 hover:bg-[#161616]"
+                  ? "bg-primary/10 text-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
               <span className="flex-shrink-0">{item.icon}</span>
@@ -112,10 +112,10 @@ export function AnalyticsSidebar() {
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="p-3 border-t border-[#1A1A1A]">
+      <div className="border-t border-border p-3">
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={`flex items-center gap-2 w-full rounded-lg px-3 py-2 text-sm text-zinc-500 hover:text-zinc-300 hover:bg-[#161616] transition-colors ${
+          className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${
             collapsed ? "justify-center" : ""
           }`}
           aria-label={collapsed ? "Genişlet" : "Daralt"}
@@ -132,7 +132,7 @@ export function AnalyticsSidebar() {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 lg:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-[#161616] border border-[#222222] text-zinc-400 hover:text-zinc-200 transition-colors"
+        className="fixed left-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:text-foreground lg:hidden"
         aria-label="Menüyü aç"
       >
         <Menu size={18} />
@@ -141,20 +141,20 @@ export function AnalyticsSidebar() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-[220px] bg-[#0D0D0D] border-r border-[#1A1A1A] transform transition-transform duration-300 lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-[220px] transform border-r border-border bg-sidebar transition-transform duration-300 lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="absolute right-4 top-4 text-muted-foreground transition-colors hover:text-foreground"
           aria-label="Kapat"
         >
           <X size={18} />
@@ -164,7 +164,7 @@ export function AnalyticsSidebar() {
 
       {/* Desktop sidebar */}
       <div
-        className={`hidden lg:flex flex-col flex-shrink-0 bg-[#0D0D0D] border-r border-[#1A1A1A] transition-all duration-300 ${
+        className={`hidden flex-shrink-0 flex-col border-r border-border bg-sidebar transition-all duration-300 lg:flex ${
           collapsed ? "w-[56px]" : "w-[220px]"
         }`}
         style={{ minHeight: "100vh" }}

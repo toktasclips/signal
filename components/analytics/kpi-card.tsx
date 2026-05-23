@@ -15,35 +15,35 @@ export function KpiCard({ title, value, change, icon }: KpiCardProps) {
   const isFlat = change !== undefined && change === 0
 
   const changeColor = isPositive
-    ? "text-emerald-400"
+    ? "text-emerald-700"
     : isNegative
-    ? "text-red-400"
-    : "text-zinc-500"
+    ? "text-red-700"
+    : "text-muted-foreground"
 
   const changeBg = isPositive
-    ? "bg-emerald-400/10"
+    ? "bg-emerald-50 border-emerald-200/80"
     : isNegative
-    ? "bg-red-400/10"
-    : "bg-zinc-700/20"
+    ? "bg-red-50 border-red-200/80"
+    : "bg-muted/70 border-border"
 
   const ChangeIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus
 
   return (
-    <div className="bg-[#111111] border border-[#222222] rounded-xl p-5 flex flex-col gap-3">
+    <div className="flex min-h-[154px] flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3.5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">
+        <span className="text-[11px] font-medium text-muted-foreground">
           {title}
         </span>
-        {icon && <span className="text-zinc-600">{icon}</span>}
+        {icon && <span className="text-muted-foreground/70">{icon}</span>}
       </div>
 
-      <div className="text-2xl font-bold text-zinc-100 tabular-nums leading-none">
+      <div className="text-2xl font-semibold tracking-tight text-foreground tabular-nums leading-none">
         {value}
       </div>
 
       {change !== undefined && (
         <div
-          className={`inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-full text-xs font-medium ${changeBg} ${changeColor}`}
+          className={`inline-flex items-center gap-1 self-start rounded-md border px-2 py-0.5 text-xs font-medium ${changeBg} ${changeColor}`}
         >
           <ChangeIcon size={11} />
           <span>
@@ -52,6 +52,15 @@ export function KpiCard({ title, value, change, icon }: KpiCardProps) {
           </span>
         </div>
       )}
+      <div className="mt-auto flex h-4 items-end gap-1">
+        {[28, 42, 36, 52, 44, 62].map((height, index) => (
+          <span
+            key={index}
+            className="w-full rounded-sm bg-primary/10"
+            style={{ height: `${height}%` }}
+          />
+        ))}
+      </div>
     </div>
   )
 }

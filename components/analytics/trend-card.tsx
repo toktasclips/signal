@@ -29,25 +29,25 @@ export function TrendCard({
   const isNegative = change < 0
 
   const changeColor = isPositive
-    ? "text-emerald-400"
+    ? "text-emerald-700"
     : isNegative
-    ? "text-red-400"
-    : "text-zinc-500"
+    ? "text-red-700"
+    : "text-muted-foreground"
 
   const ChangeIcon = isPositive ? TrendingUp : isNegative ? TrendingDown : Minus
 
   const sparkData = sparklineData?.map((v, i) => ({ i, v })) ?? []
-  const lineColor = isPositive ? "#10B981" : isNegative ? "#EF4444" : "#6B7280"
+  const lineColor = isPositive ? "#5E6B5C" : isNegative ? "#DC2626" : "#71717A"
 
   return (
-    <div className="bg-[#111111] border border-[#222222] rounded-xl p-4 flex flex-col gap-2">
-      <span className="text-xs text-zinc-500 uppercase tracking-wider font-medium">
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-card">
+      <span className="text-[11px] font-medium text-muted-foreground">
         {label}
       </span>
 
       <div className="flex items-end justify-between gap-2">
         <div className="flex flex-col gap-1">
-          <span className="text-xl font-bold text-zinc-100 tabular-nums leading-none">
+          <span className="text-xl font-semibold tracking-tight text-foreground tabular-nums leading-none">
             {prefix}
             {typeof currentValue === "number"
               ? currentValue.toLocaleString("tr-TR")

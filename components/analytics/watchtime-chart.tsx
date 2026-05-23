@@ -36,16 +36,16 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg px-3 py-2 shadow-xl">
-      <p className="text-xs text-zinc-500 mb-2">{label}</p>
+    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-dropdown">
+      <p className="mb-2 text-xs text-muted-foreground">{label}</p>
       {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2 text-xs">
           <span
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="text-zinc-400">{entry.name}:</span>
-          <span className="text-zinc-100 font-medium tabular-nums">
+          <span className="text-muted-foreground">{entry.name}:</span>
+          <span className="font-medium text-foreground tabular-nums">
             {entry.name === "MRR"
               ? `₺${entry.value.toLocaleString("tr-TR")}`
               : `${entry.value.toLocaleString("tr-TR")} sa`}
@@ -64,7 +64,7 @@ function formatK(value: number): string {
 export function WatchtimeChart({ data }: WatchtimeChartProps) {
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-zinc-600 text-sm">
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
         Gösterilecek veri yok
       </div>
     )
@@ -76,7 +76,7 @@ export function WatchtimeChart({ data }: WatchtimeChartProps) {
         data={data}
         margin={{ top: 8, right: 16, left: 0, bottom: 0 }}
       >
-        <CartesianGrid stroke="#1F1F1F" strokeDasharray="3 3" vertical={false} />
+        <CartesianGrid stroke="#E7E7E0" strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="month"
           tick={{ fill: "#71717A", fontSize: 11 }}
@@ -112,20 +112,20 @@ export function WatchtimeChart({ data }: WatchtimeChartProps) {
           type="monotone"
           dataKey="watchHours"
           name="Watch Hours"
-          stroke="#F59E0B"
+          stroke="#B68B2D"
           strokeWidth={2}
-          dot={{ r: 3, fill: "#F59E0B", strokeWidth: 0 }}
-          activeDot={{ r: 5, fill: "#F59E0B", strokeWidth: 0 }}
+          dot={{ r: 3, fill: "#B68B2D", strokeWidth: 0 }}
+          activeDot={{ r: 5, fill: "#B68B2D", stroke: "#FFFFFF", strokeWidth: 2 }}
         />
         <Line
           yAxisId="right"
           type="monotone"
           dataKey="mrr"
           name="MRR"
-          stroke="#8B5CF6"
+          stroke="#5E6B5C"
           strokeWidth={2}
-          dot={{ r: 3, fill: "#8B5CF6", strokeWidth: 0 }}
-          activeDot={{ r: 5, fill: "#8B5CF6", strokeWidth: 0 }}
+          dot={{ r: 3, fill: "#5E6B5C", strokeWidth: 0 }}
+          activeDot={{ r: 5, fill: "#5E6B5C", stroke: "#FFFFFF", strokeWidth: 2 }}
         />
       </LineChart>
     </ResponsiveContainer>
