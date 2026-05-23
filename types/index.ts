@@ -235,6 +235,19 @@ export interface SemanticTag {
   created_at: string;
 }
 
+export interface SoftwareExpenseItem {
+  id: string;
+  user_id: string;
+  name: string;
+  monthly_cost: number;
+  currency: string;
+  category: string | null;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type ActionState<T = void> =
   | { status: "idle" }
   | { status: "loading" }

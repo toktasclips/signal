@@ -1,11 +1,30 @@
 import { getCurrentStripePeriod } from "@/lib/stripe/sync";
+import { createClient } from "@/lib/supabase/server";
 import { StripeSyncCard } from "@/components/settings/stripe-sync-card";
+import { SoftwareExpensesCard } from "@/components/settings/software-expenses-card";
 import type { Metadata } from "next";
+import type { SoftwareExpenseItem } from "@/types";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default function SettingsPage() {
+type SoftwareExpenseRow = Omit<SoftwareExpenseItem, "monthly_cost"> & {
+  monthly_cost: number | string;
+};
+
+function normalizeSoftwareExpense(row: SoftwareExpenseRow): SoftwareExpenseItem {
+  return {
+    ...row,
+    monthly_cost: Number(row.monthly_cost),
+  };
+}
+
+export default async function SettingsPage() {
   const period = getCurrentStripePeriod();
+  const supabase = await createClient();
+  const { data: expenses } = await supabase
+    .from("software_expense_items")
+    .select("*")
+    .order("name", { ascending: true });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-6 py-8 lg:px-10">
@@ -19,6 +38,12 @@ export default function SettingsPage() {
       </div>
 
       <StripeSyncCard periodLabel={`${period.periodStart} - ${period.periodEnd}`} />
+
+      <SoftwareExpensesCard
+        items={((expenses as SoftwareExpenseRow[] | null) ?? []).map(
+          normalizeSoftwareExpense
+        )}
+      />
 
       <section className="rounded-xl border border-border bg-card p-5 shadow-card">
         <h2 className="text-sm font-semibold text-foreground">
