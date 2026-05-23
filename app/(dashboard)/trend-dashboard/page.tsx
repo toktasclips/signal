@@ -6,11 +6,13 @@ import { WatchtimeChart } from "@/components/analytics/watchtime-chart"
 import { TURKISH_MONTHS } from "@/lib/analytics/mock-data"
 import { getMonthlyMetrics } from "@/lib/analytics/data"
 import { createClient } from "@/lib/supabase/server"
-import { buildChartData, calcKpiSummary } from "@/lib/analytics/calculations"
+import { buildChartData, calcKpiSummaryForPeriod } from "@/lib/analytics/calculations"
 import { DollarSign, TrendingUp, Target, Activity, Youtube } from "lucide-react"
+import Link from "next/link"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
+import type { MonthlyMetric } from "@/lib/analytics/types"
 
 export const metadata: Metadata = { title: "Trend Dashboard" }
 
@@ -31,7 +33,37 @@ const kpiIcons = [
   <Youtube key="youtube" size={16} />,
 ]
 
-export default async function TrendDashboardPage() {
+function hasBusinessData(metric: MonthlyMetric): boolean {
+  return [
+    "total_goal",
+    "new_deal_value",
+    "monthly_recurring_revenue",
+    "cash_collected",
+    "ad_spend",
+    "instagram_reach",
+    "instagram_impressions",
+    "roas",
+    "new_customers",
+    "instagram_followers",
+    "engagement",
+    "youtube_subscribers",
+    "youtube_watch_hours",
+    "email_list",
+    "software_expenses",
+  ] satisfies Array<keyof MonthlyMetric>).some(
+    (key) => metric[key] !== null && metric[key] !== undefined
+  )
+}
+
+function periodKey(metric: { month: number; year: number }) {
+  return `${metric.year}-${String(metric.month).padStart(2, "0")}`
+}
+
+export default async function TrendDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ period?: string }>
+}) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -39,26 +71,36 @@ export default async function TrendDashboardPage() {
   if (!user) redirect("/login")
 
   const metrics = await getMonthlyMetrics(user.id)
-  const sortedMetrics = [...metrics].sort((a, b) =>
-    a.year !== b.year ? a.year - b.year : a.month - b.month
+  const sortMetrics = (items: MonthlyMetric[]) =>
+    [...items].sort((a, b) =>
+      a.year !== b.year ? a.year - b.year : a.month - b.month
+    )
+  const businessMetrics = metrics.filter(hasBusinessData)
+  const sortedMetrics = sortMetrics(businessMetrics.length ? businessMetrics : metrics)
+  const params = await searchParams
+  const selectedMetric =
+    sortedMetrics.find((metric) => periodKey(metric) === params?.period) ??
+    sortedMetrics[sortedMetrics.length - 1]
+  const selectedIndex = sortedMetrics.findIndex(
+    (metric) => periodKey(metric) === periodKey(selectedMetric)
   )
-  const latestMetric = sortedMetrics[sortedMetrics.length - 1]
+  const chartMetrics = sortedMetrics.slice(0, selectedIndex + 1)
+  const latestMetric = selectedMetric
   const firstMetric = sortedMetrics[0]
   const yearLabel =
     firstMetric.year === latestMetric.year
       ? `${latestMetric.year}`
       : `${firstMetric.year}-${latestMetric.year}`
-  const kpiSummary = calcKpiSummary(metrics)
-  const revenueData = buildChartData(sortedMetrics, "cash_collected")
-  const profitData = buildChartData(sortedMetrics, "profit")
-  const MONTHS = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"]
-  const reachCustomersData = sortedMetrics.map((m) => ({
-    month: MONTHS[m.month - 1],
+  const kpiSummary = calcKpiSummaryForPeriod(sortedMetrics, selectedMetric)
+  const revenueData = buildChartData(chartMetrics, "cash_collected")
+  const profitData = buildChartData(chartMetrics, "profit")
+  const reachCustomersData = chartMetrics.map((m) => ({
+    month: `${TURKISH_MONTHS[m.month - 1].slice(0, 3)} ${String(m.year).slice(-2)}`,
     reach: m.instagram_reach ?? 0,
     customers: m.new_customers ?? 0,
   }))
-  const watchtimeData = sortedMetrics.map((m) => ({
-    month: MONTHS[m.month - 1],
+  const watchtimeData = chartMetrics.map((m) => ({
+    month: `${TURKISH_MONTHS[m.month - 1].slice(0, 3)} ${String(m.year).slice(-2)}`,
     watchHours: m.youtube_watch_hours ?? 0,
     mrr: m.monthly_recurring_revenue ?? 0,
   }))
@@ -75,11 +117,36 @@ export default async function TrendDashboardPage() {
           </span>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Son güncelleme: {TURKISH_MONTHS[latestMetric.month - 1]} {latestMetric.year}
+          Seçili dönem: {TURKISH_MONTHS[latestMetric.month - 1]} {latestMetric.year}
         </p>
       </div>
 
       <div className="space-y-8 px-6 py-8 lg:px-10">
+        <section className="space-y-3">
+          <SectionHeader
+            title="Dönem Seçimi"
+            description="Sistem başlangıcı Eylül 2025. Her ayı bir önceki dolu ayla karşılaştırabilirsiniz."
+          />
+          <div className="flex flex-wrap gap-2">
+            {sortedMetrics.map((metric) => {
+              const active = periodKey(metric) === periodKey(selectedMetric)
+              return (
+                <Link
+                  key={periodKey(metric)}
+                  href={`/trend-dashboard?period=${periodKey(metric)}`}
+                  className={`rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  }`}
+                >
+                  {TURKISH_MONTHS[metric.month - 1]} {metric.year}
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
         <section className="space-y-3">
           <SectionHeader
             title="Temel Metrikler"
