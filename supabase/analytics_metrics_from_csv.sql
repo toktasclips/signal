@@ -1,8 +1,11 @@
 -- Import from: KPIs, Outreaach + Hot List - KPI Tracking.csv
--- Replace the UUID below with the auth.users.id of the account that should own the data.
+-- Replace the email below if you want to import the data for another account.
 
 WITH owner AS (
-  SELECT '00000000-0000-0000-0000-000000000000'::uuid AS user_id
+  SELECT id AS user_id
+  FROM auth.users
+  WHERE email = 'mtoktas252@gmail.com'
+  LIMIT 1
 ),
 rows AS (
   SELECT
