@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-const appHost = appUrl.replace(/^https?:\/\//, "");
+// Set NEXT_PUBLIC_APP_URL in production so server actions are permitted from your deploy domain.
+const appHost = (() => {
+  try {
+    const raw = process.env.NEXT_PUBLIC_APP_URL;
+    return raw ? new URL(raw).host : null;
+  } catch {
+    return null;
+  }
+})();
 
 // Supabase project hostname extracted from env so CSP stays accurate in all environments
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -32,7 +39,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["openai"],
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000", appHost],
+      allowedOrigins: ["localhost:3000", ...(appHost ? [appHost] : [])],
     },
   },
   images: {
