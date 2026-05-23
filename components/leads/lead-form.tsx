@@ -212,6 +212,7 @@ export function LeadForm({ action, defaultValues, campaigns, onSuccess }: LeadFo
               </option>
             ))}
           </Select>
+          {field("campaign_id") && <p className="text-xs text-destructive">{field("campaign_id")}</p>}
         </div>
       )}
 
