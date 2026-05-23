@@ -67,6 +67,36 @@ export interface Lead {
   updated_at: string;
 }
 
+export interface SalesEvent {
+  id: string;
+  user_id: string;
+  lead_id: string | null;
+  task_id: string | null;
+  campaign_id: string | null;
+  type: string;
+  title: string;
+  description: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface BusinessContext {
+  id: string;
+  user_id: string;
+  business_name: string | null;
+  niche: string | null;
+  offer_type: string | null;
+  sales_model: string | null;
+  target_audience: string | null;
+  acquisition_channel: string | null;
+  average_offer_value: number | null;
+  sales_cycle: string | null;
+  primary_goal: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type InsightSeverity = "info" | "warning" | "critical" | "success";
 
 export interface Insight {

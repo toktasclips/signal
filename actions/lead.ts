@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { leadSchema } from "@/lib/validations/lead";
+import { trackEvent } from "@/lib/events/track";
 import type { ActionState } from "@/types";
 
 export async function createLead(
@@ -23,12 +24,23 @@ export async function createLead(
     };
   }
 
-  const { error } = await supabase.from("leads").insert({
+  const { data, error } = await supabase.from("leads").insert({
     ...parsed.data,
     user_id: user.id,
-  });
+  }).select("id").single();
 
   if (error) return { status: "error", error: "Failed to create lead. Please try again." };
+
+  await trackEvent({
+    userId: user.id,
+    type: "lead_created",
+    title: `New lead added: ${parsed.data.name}`,
+    description: parsed.data.company
+      ? `${parsed.data.name} from ${parsed.data.company} entered the pipeline.`
+      : `${parsed.data.name} entered the pipeline.`,
+    leadId: data?.id,
+    metadata: { source: parsed.data.source, status: parsed.data.status },
+  });
 
   revalidatePath("/leads");
   revalidatePath("/campaigns");
@@ -61,6 +73,13 @@ export async function updateLead(
     .eq("user_id", user.id);
 
   if (error) return { status: "error", error: "Failed to update lead. Please try again." };
+
+  await trackEvent({
+    userId: user.id,
+    type: "lead_updated",
+    title: `Lead updated: ${parsed.data.name}`,
+    leadId: id,
+  });
 
   revalidatePath("/leads");
   revalidatePath("/campaigns");

@@ -11,6 +11,8 @@ import {
   Megaphone,
   CheckSquare,
   Settings,
+  Activity,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +46,11 @@ const navItems = [
     label: "Tasks",
     href: "/tasks",
     icon: CheckSquare,
+  },
+  {
+    label: "Activity",
+    href: "/activity",
+    icon: Activity,
   },
   {
     label: "Calendar",
@@ -115,7 +122,20 @@ export function Sidebar({ onNavClick }: SidebarProps) {
       </nav>
 
       {/* Bottom */}
-      <div className="border-t border-sidebar-border px-3 py-3">
+      <div className="border-t border-sidebar-border px-3 py-3 space-y-0.5">
+        <Link
+          href="/context"
+          onClick={onNavClick}
+          className={cn(
+            "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all duration-150",
+            pathname.startsWith("/context")
+              ? "bg-primary/8 text-foreground font-medium"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          )}
+        >
+          <Building2 className={cn("h-4 w-4 shrink-0", pathname.startsWith("/context") ? "text-primary" : "text-muted-foreground")} />
+          <span>Business Context</span>
+        </Link>
         <Link
           href="/settings"
           onClick={onNavClick}

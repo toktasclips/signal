@@ -3,19 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { campaignSchema, assignLeadSchema } from "@/lib/validations/campaign";
+import { trackEvent } from "@/lib/events/track";
 import type { ActionState } from "@/types";
 
 async function getAuthUser() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   return { supabase, user };
 }
 
 function revalidateAll() {
   revalidatePath("/campaigns");
   revalidatePath("/dashboard");
+  revalidatePath("/activity");
 }
 
 export async function createCampaign(
@@ -42,12 +42,22 @@ export async function createCampaign(
     };
   }
 
-  const { error } = await supabase.from("campaigns").insert({
+  const { data, error } = await supabase.from("campaigns").insert({
     ...parsed.data,
     user_id: user.id,
-  });
+  }).select("id").single();
 
   if (error) return { status: "error", error: "Failed to create campaign." };
+
+  await trackEvent({
+    userId: user.id,
+    type: "campaign_created",
+    title: `Campaign launched: ${parsed.data.name}`,
+    description: `${parsed.data.type} campaign created${parsed.data.budget ? ` with $${Number(parsed.data.budget).toLocaleString()} budget` : ""}.`,
+    campaignId: data?.id,
+    metadata: { type: parsed.data.type, budget: parsed.data.budget },
+  });
+
   revalidateAll();
   return { status: "success" };
 }
@@ -118,20 +128,44 @@ export async function assignLeadToCampaign(
   if (campaignId) {
     const { data: campaign } = await supabase
       .from("campaigns")
-      .select("id")
+      .select("id, name")
       .eq("id", campaignId)
       .eq("user_id", user.id)
       .single();
     if (!campaign) return { status: "error", error: "Campaign not found." };
+
+    const { data: lead } = await supabase
+      .from("leads")
+      .select("name")
+      .eq("id", leadId)
+      .eq("user_id", user.id)
+      .single();
+
+    const { error } = await supabase
+      .from("leads")
+      .update({ campaign_id: parsed.data.campaign_id })
+      .eq("id", leadId)
+      .eq("user_id", user.id);
+
+    if (error) return { status: "error", error: "Failed to assign." };
+
+    await trackEvent({
+      userId: user.id,
+      type: "campaign_assigned",
+      title: `${lead?.name ?? "Lead"} assigned to "${campaign.name}"`,
+      leadId,
+      campaignId,
+    });
+  } else {
+    const { error } = await supabase
+      .from("leads")
+      .update({ campaign_id: null })
+      .eq("id", leadId)
+      .eq("user_id", user.id);
+
+    if (error) return { status: "error", error: "Failed to assign." };
   }
 
-  const { error } = await supabase
-    .from("leads")
-    .update({ campaign_id: parsed.data.campaign_id })
-    .eq("id", leadId)
-    .eq("user_id", user.id);
-
-  if (error) return { status: "error", error: "Failed to assign." };
   revalidatePath("/campaigns");
   revalidatePath("/leads");
   return { status: "success" };

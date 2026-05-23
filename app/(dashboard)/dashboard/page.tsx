@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { Building2 } from "lucide-react";
 import { computeInsights, syncInsights } from "@/lib/insights/engine";
 import { IntelligenceFeed } from "@/components/insights/intelligence-feed";
 import { PriorityActions } from "@/components/insights/priority-actions";
@@ -23,7 +25,7 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   // Single round-trip: fetch everything we need
-  const [leadsRes, tasksRes, campaignsRes] = await Promise.all([
+  const [leadsRes, tasksRes, campaignsRes, contextRes] = await Promise.all([
     supabase.from("leads").select("*").eq("user_id", user.id),
     supabase
       .from("tasks")
@@ -31,9 +33,11 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .neq("status", "completed"),
     supabase.from("campaigns").select("*").eq("user_id", user.id),
+    supabase.from("business_context").select("id").eq("user_id", user.id).maybeSingle(),
   ]);
 
   const allLeads = (leadsRes.data ?? []) as Lead[];
+  const hasContext = !!contextRes.data;
   const allTasks = (tasksRes.data ?? []) as Task[];
   const allCampaigns = (campaignsRes.data ?? []) as Campaign[];
 
@@ -116,6 +120,27 @@ export default async function DashboardPage() {
 
       {/* Intelligence Feed */}
       <IntelligenceFeed insights={insights} />
+
+      {/* Business Context prompt */}
+      {!hasContext && (
+        <Link
+          href="/context"
+          className="flex items-center gap-3 rounded-xl border border-dashed border-border px-4 py-3.5 hover:bg-muted/40 transition-colors group"
+        >
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted group-hover:bg-background transition-colors">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              Complete your Business Context
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Help Signal understand your business to generate smarter insights.
+            </p>
+          </div>
+          <span className="text-xs text-muted-foreground flex-shrink-0">Set up →</span>
+        </Link>
+      )}
 
       {/* Priority Actions */}
       <PriorityActions leads={allLeads} tasks={allTasks} />
