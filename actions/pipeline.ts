@@ -56,7 +56,7 @@ export async function updateLeadStatus(
     .eq("id", id)
     .single();
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "lead_moved_stage",
     title: `${lead?.name ?? "Lead"} moved to ${STAGE_LABELS[status]}`,
@@ -97,7 +97,7 @@ export async function markLeadWon(
 
   if (error) return { status: "error", error: "Failed to update." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "lead_won",
     title: `Deal closed — won: ${lead?.name ?? "Lead"}`,
@@ -141,7 +141,7 @@ export async function markLeadLost(
 
   if (error) return { status: "error", error: "Failed to update." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "lead_lost",
     title: `Deal closed — lost: ${lead?.name ?? "Lead"}`,

@@ -42,7 +42,7 @@ export async function createTask(
 
   if (error) return { status: "error", error: "Failed to create task." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "task_created",
     title: `Task created: ${parsed.data.title}`,
@@ -118,7 +118,7 @@ export async function completeTask(id: string): Promise<ActionState> {
 
   if (error) return { status: "error", error: "Failed to complete task." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "task_completed",
     title: `Task completed: ${task?.title ?? "Task"}`,

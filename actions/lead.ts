@@ -31,7 +31,7 @@ export async function createLead(
 
   if (error) return { status: "error", error: "Failed to create lead. Please try again." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "lead_created",
     title: `New lead added: ${parsed.data.name}`,
@@ -74,7 +74,7 @@ export async function updateLead(
 
   if (error) return { status: "error", error: "Failed to update lead. Please try again." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "lead_updated",
     title: `Lead updated: ${parsed.data.name}`,

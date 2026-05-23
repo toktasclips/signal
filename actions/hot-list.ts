@@ -31,7 +31,7 @@ export async function toggleHotLead(id: string, currentValue: boolean): Promise<
 
   if (error) return { status: "error", error: "Failed to update." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: currentValue ? "lead_removed_hot" : "lead_hot",
     title: currentValue
@@ -68,7 +68,7 @@ export async function updateLeadPriority(id: string, priority: LeadPriority): Pr
 
   if (error) return { status: "error", error: "Failed to update." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "priority_changed",
     title: `${lead?.name ?? "Lead"} priority set to ${priority}`,
@@ -104,7 +104,7 @@ export async function updateFollowUpDate(id: string, date: string | null): Promi
   if (error) return { status: "error", error: "Failed to update." };
 
   if (date) {
-    await trackEvent({
+    trackEvent({
       userId: user.id,
       type: "followup_scheduled",
       title: `Follow-up scheduled for ${lead?.name ?? "lead"}`,

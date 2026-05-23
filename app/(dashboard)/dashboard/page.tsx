@@ -10,7 +10,7 @@ import { TodayHotLeads } from "@/components/dashboard/today-hot-leads";
 import { PipelineSnapshot } from "@/components/dashboard/pipeline-snapshot";
 import { TopCampaigns } from "@/components/dashboard/top-campaigns";
 import { TodayTasks } from "@/components/dashboard/today-tasks";
-import type { Lead, LeadStatus, Task, Campaign } from "@/types";
+import type { Insight, Lead, LeadStatus, Task, Campaign } from "@/types";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -24,8 +24,8 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Single round-trip: fetch everything we need
-  const [leadsRes, tasksRes, campaignsRes, contextRes] = await Promise.all([
+  // Single round-trip: fetch everything in parallel
+  const [leadsRes, tasksRes, campaignsRes, contextRes, insightsRes] = await Promise.all([
     supabase.from("leads").select("*").eq("user_id", user.id),
     supabase
       .from("tasks")
@@ -34,16 +34,23 @@ export default async function DashboardPage() {
       .neq("status", "completed"),
     supabase.from("campaigns").select("*").eq("user_id", user.id),
     supabase.from("business_context").select("id").eq("user_id", user.id).maybeSingle(),
+    supabase
+      .from("insights")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_dismissed", false)
+      .order("created_at", { ascending: false }),
   ]);
 
   const allLeads = (leadsRes.data ?? []) as Lead[];
   const hasContext = !!contextRes.data;
   const allTasks = (tasksRes.data ?? []) as Task[];
   const allCampaigns = (campaignsRes.data ?? []) as Campaign[];
+  const insights = (insightsRes.data ?? []) as Insight[];
 
-  // Compute + sync insights (rule engine)
+  // Sync insights in background — doesn't block render
   const computed = computeInsights(allLeads, allTasks, allCampaigns);
-  const insights = await syncInsights(user.id, computed);
+  syncInsights(user.id, computed).catch(() => {});
 
   // Derived data for existing widgets
   const now = new Date();

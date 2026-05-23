@@ -49,7 +49,7 @@ export async function createCampaign(
 
   if (error) return { status: "error", error: "Failed to create campaign." };
 
-  await trackEvent({
+  trackEvent({
     userId: user.id,
     type: "campaign_created",
     title: `Campaign launched: ${parsed.data.name}`,
@@ -149,7 +149,7 @@ export async function assignLeadToCampaign(
 
     if (error) return { status: "error", error: "Failed to assign." };
 
-    await trackEvent({
+    trackEvent({
       userId: user.id,
       type: "campaign_assigned",
       title: `${lead?.name ?? "Lead"} assigned to "${campaign.name}"`,

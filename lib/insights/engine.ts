@@ -208,15 +208,14 @@ export async function syncInsights(
   const existingMap = new Map(existing?.map((i) => [i.type, i]) ?? []);
   const activeTypes = new Set(computed.map((i) => i.type));
 
-  // Remove stale insights whose conditions no longer apply
-  for (const [type] of existingMap) {
-    if (!activeTypes.has(type)) {
-      await supabase
-        .from("insights")
-        .delete()
-        .eq("user_id", userId)
-        .eq("type", type);
-    }
+  // Remove stale insights whose conditions no longer apply (single batch delete)
+  const staleTypes = [...existingMap.keys()].filter((t) => !activeTypes.has(t));
+  if (staleTypes.length > 0) {
+    await supabase
+      .from("insights")
+      .delete()
+      .eq("user_id", userId)
+      .in("type", staleTypes);
   }
 
   // Upsert active insights, preserving is_read and skipping dismissed
