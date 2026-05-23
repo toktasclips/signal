@@ -5,7 +5,30 @@ WITH owner AS (
   SELECT '00000000-0000-0000-0000-000000000000'::uuid AS user_id
 ),
 rows AS (
-  SELECT * FROM (VALUES
+  SELECT
+    month::integer,
+    year::integer,
+    total_goal::numeric,
+    new_deal_value::numeric,
+    monthly_recurring_revenue::numeric,
+    cash_collected::numeric,
+    ad_spend::numeric,
+    instagram_reach::integer,
+    instagram_impressions::integer,
+    cpm::numeric,
+    roas::numeric,
+    new_customers::integer,
+    instagram_followers::integer,
+    engagement::numeric,
+    shares::integer,
+    youtube_subscribers::integer,
+    youtube_watch_hours::numeric,
+    email_list::integer,
+    software_expenses::numeric,
+    other_expenses::numeric,
+    profit::numeric,
+    notes::text
+  FROM (VALUES
     (9, 2025, 285365, 285365, NULL, 280365, 52000, 203482, 528712, 98.35, 5.49, NULL, NULL, NULL, NULL, NULL, 361.8, NULL, 0, 0, 233365, NULL),
     (10, 2025, 615400, 400000, NULL, 615400, 48000, 176934, 461921, 103.91, 8.33, NULL, NULL, NULL, NULL, NULL, 184.1, NULL, 0, 0, 352000, NULL),
     (11, 2025, 481500, 481500, NULL, 481500, 71410, 367, 838944, 85.12, 6.74, NULL, NULL, NULL, NULL, NULL, 238, NULL, 0, 0, 410090, NULL),
