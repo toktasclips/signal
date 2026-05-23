@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Building2 } from "lucide-react";
 import { computeInsights, syncInsights } from "@/lib/insights/engine";
@@ -10,6 +9,7 @@ import { TodayHotLeads } from "@/components/dashboard/today-hot-leads";
 import { PipelineSnapshot } from "@/components/dashboard/pipeline-snapshot";
 import { TopCampaigns } from "@/components/dashboard/top-campaigns";
 import { TodayTasks } from "@/components/dashboard/today-tasks";
+import { getSessionUser } from "@/lib/supabase/session";
 import type { Insight, Lead, LeadStatus, Task, Campaign } from "@/types";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -18,10 +18,7 @@ const OPEN_STATUSES: LeadStatus[] = ["new", "contacted", "qualified", "offer_sen
 const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) redirect("/login");
 
   // Single round-trip: fetch everything in parallel

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session";
 import { HotListClient } from "@/components/hot-list/hot-list-client";
 import type { Lead } from "@/types";
 
@@ -9,8 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HotListPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) redirect("/login");
 
   const today = new Date().toISOString().split("T")[0];

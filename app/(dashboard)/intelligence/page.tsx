@@ -1,5 +1,5 @@
 import { BrainCircuit } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session";
 import { redirect } from "next/navigation";
 import {
   computeRelationshipInsights,
@@ -16,10 +16,7 @@ import { CampaignIntelSection } from "@/components/intelligence/campaign-intel-s
 export const dynamic = "force-dynamic";
 
 export default async function IntelligencePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) redirect("/login");
 
   const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();

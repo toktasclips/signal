@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { TrendingUp, BadgeCheck, Target, BarChart3 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session";
 import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 import { PipelineHeaderActions } from "@/components/pipeline/pipeline-header-actions";
 import { formatValueTL } from "@/lib/lead-utils";
@@ -20,10 +20,7 @@ const OPEN_STATUSES: LeadStatus[] = [
 ];
 
 export default async function PipelinePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) redirect("/login");
 
   const [{ data: leadsData }, { data: campaignsData }] = await Promise.all([

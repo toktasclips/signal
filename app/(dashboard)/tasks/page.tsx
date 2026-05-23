@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/session";
 import { TasksClient } from "@/components/tasks/tasks-client";
 import type { Lead, Task } from "@/types";
 
@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TasksPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
   if (!user) redirect("/login");
 
   const [{ data: tasksRaw }, { data: leadsRaw }] = await Promise.all([
