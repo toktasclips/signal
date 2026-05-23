@@ -29,6 +29,7 @@ const csp = [
   .trim();
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["openai"],
   experimental: {
     serverActions: {
       allowedOrigins: ["localhost:3000", appHost],

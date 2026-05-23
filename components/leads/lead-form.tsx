@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ interface LeadFormProps {
 const initialState: ActionState = { status: "idle" };
 
 export function LeadForm({ action, defaultValues, campaigns, onSuccess }: LeadFormProps) {
+  const errorRef = useRef<HTMLDivElement>(null);
   const [state, formAction, isPending] = useActionState(
     async (prevState: ActionState, formData: FormData) => {
       const result = await action(prevState, formData);
@@ -28,6 +29,12 @@ export function LeadForm({ action, defaultValues, campaigns, onSuccess }: LeadFo
     initialState
   );
 
+  useEffect(() => {
+    if (state.status === "error") {
+      errorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [state]);
+
   const field = (name: string) =>
     state.status === "error" && state.fieldErrors?.[name]
       ? state.fieldErrors[name][0]
@@ -35,9 +42,13 @@ export function LeadForm({ action, defaultValues, campaigns, onSuccess }: LeadFo
 
   return (
     <form action={formAction} className="space-y-4 px-6 pb-2">
-      {state.status === "error" && !state.fieldErrors && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
-          <p className="text-xs text-destructive">{state.error}</p>
+      {state.status === "error" && (
+        <div ref={errorRef} className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
+          <p className="text-xs text-destructive">
+            {state.fieldErrors
+              ? "Please check the fields below."
+              : state.error}
+          </p>
         </div>
       )}
 
