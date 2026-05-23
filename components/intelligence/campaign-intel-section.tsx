@@ -16,7 +16,7 @@ interface CampaignIntelSectionProps {
 export function CampaignIntelSection({ campaigns }: CampaignIntelSectionProps) {
   if (campaigns.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-6 text-center">
+      <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
         No campaigns with leads yet.
       </p>
     );
@@ -25,9 +25,8 @@ export function CampaignIntelSection({ campaigns }: CampaignIntelSectionProps) {
   const maxRevenue = Math.max(...campaigns.map((c) => c.wonRevenue));
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      {/* Table header */}
-      <div className="hidden sm:grid sm:grid-cols-5 gap-4 px-4 py-2.5 bg-muted/40 border-b border-border">
+    <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+      <div className="hidden gap-4 border-b border-border bg-muted/35 px-4 py-2.5 sm:grid sm:grid-cols-5">
         {["Campaign", "Leads", "Close Rate", "Won Revenue", "Avg. Deal"].map(
           (h) => (
             <span
@@ -49,8 +48,8 @@ export function CampaignIntelSection({ campaigns }: CampaignIntelSectionProps) {
             <div
               key={c.id}
               className={cn(
-                "grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 px-4 py-3 items-center",
-                isTop && "bg-emerald-50/30"
+                "grid grid-cols-2 items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/30 sm:grid-cols-5 sm:gap-4",
+                isTop && "bg-emerald-50/20"
               )}
             >
               {/* Name */}
@@ -79,9 +78,9 @@ export function CampaignIntelSection({ campaigns }: CampaignIntelSectionProps) {
                     {rate}%
                   </p>
                 </div>
-                <div className="mt-1 h-1 w-16 rounded-full bg-muted overflow-hidden">
+                <div className="mt-1 h-1 w-16 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-primary/60"
+                    className="h-full rounded-full bg-primary/55"
                     style={{ width: `${rate}%` }}
                   />
                 </div>

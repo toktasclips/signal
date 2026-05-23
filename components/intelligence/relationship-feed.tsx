@@ -25,7 +25,7 @@ export function RelationshipFeed({ insights: initial }: RelationshipFeedProps) {
 
   if (insights.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-6 text-center">
+      <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
         No insights yet. Add leads, log activity and run deals to surface patterns.
       </p>
     );

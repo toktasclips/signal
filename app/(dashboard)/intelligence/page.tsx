@@ -112,73 +112,72 @@ export default async function IntelligencePage() {
   const campaignStats = computeCampaignIntelligence(allCampaigns, allLeads);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10 px-4 py-8 sm:px-6">
-      {/* Header */}
+    <div className="mx-auto max-w-5xl space-y-8 px-6 py-8 lg:px-10">
       <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 mt-0.5">
-          <BrainCircuit className="h-5 w-5 text-primary" />
+        <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card shadow-card">
+          <BrainCircuit className="h-4 w-4 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Relationship Intelligence
           </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             Discover patterns, bottlenecks and revenue opportunities across your
             operating system.
           </p>
         </div>
       </div>
 
-      {/* Insight feed */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Insights
-        </h2>
+        <SectionHeader
+          title="Executive Insights"
+          description="Priority signals distilled from pipeline activity, campaign performance and relationship momentum."
+        />
         <RelationshipFeed insights={insights} />
       </section>
 
-      {/* Lead Health */}
       <section className="space-y-4">
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Lead Health
-          </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Activity-based health score across all active leads.
-          </p>
-        </div>
+        <SectionHeader
+          title="Lead Health"
+          description="Activity-based health score across all active leads."
+        />
         <LeadHealthSection results={leadHealth} />
       </section>
 
-      {/* Pipeline Velocity */}
       {velocity && (
         <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Pipeline Velocity
-            </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              How fast deals move through your pipeline.
-            </p>
-          </div>
+          <SectionHeader
+            title="Momentum Analysis"
+            description="A clean operating view of how quickly revenue is converting."
+          />
           <PipelineVelocitySection velocity={velocity} />
         </section>
       )}
 
-      {/* Campaign Performance */}
       {campaignStats.length > 0 && (
         <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Campaign Performance
-            </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Revenue and close rate comparison across all campaigns.
-            </p>
-          </div>
+          <SectionHeader
+            title="Campaign Performance"
+            description="Revenue and close rate comparison across all campaigns."
+          />
           <CampaignIntelSection campaigns={campaignStats} />
         </section>
       )}
+    </div>
+  );
+}
+
+function SectionHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      <p className="text-xs text-muted-foreground">{description}</p>
     </div>
   );
 }

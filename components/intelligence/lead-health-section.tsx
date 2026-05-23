@@ -9,25 +9,25 @@ const HEALTH_CONFIG: Record<
   high_momentum: {
     label: "High Momentum",
     dot: "bg-emerald-500",
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    badge: "bg-emerald-50/70 text-emerald-700 border-emerald-200/80",
     row: "",
   },
   healthy: {
     label: "Healthy",
-    dot: "bg-blue-400",
-    badge: "bg-blue-50 text-blue-700 border-blue-200",
+    dot: "bg-slate-400",
+    badge: "bg-muted/70 text-muted-foreground border-border",
     row: "",
   },
   at_risk: {
     label: "At Risk",
-    dot: "bg-amber-500",
-    badge: "bg-amber-50 text-amber-700 border-amber-200",
+    dot: "bg-amber-400",
+    badge: "bg-amber-50/70 text-amber-700 border-amber-200/80",
     row: "",
   },
   stale: {
     label: "Stale",
     dot: "bg-red-400",
-    badge: "bg-red-50 text-red-700 border-red-200",
+    badge: "bg-red-50/70 text-red-700 border-red-200/80",
     row: "opacity-75",
   },
 };
@@ -39,7 +39,7 @@ interface LeadHealthSectionProps {
 export function LeadHealthSection({ results }: LeadHealthSectionProps) {
   if (results.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-6 text-center">
+      <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
         No active leads to analyze.
       </p>
     );
@@ -53,14 +53,14 @@ export function LeadHealthSection({ results }: LeadHealthSectionProps) {
   return (
     <div className="space-y-4">
       {/* Summary row */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2">
         {(["stale", "at_risk", "healthy", "high_momentum"] as LeadHealthStatus[]).map(
           (h) =>
             counts[h] ? (
               <div
                 key={h}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium",
+                  "flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium",
                   HEALTH_CONFIG[h].badge
                 )}
               >
@@ -72,7 +72,7 @@ export function LeadHealthSection({ results }: LeadHealthSectionProps) {
       </div>
 
       {/* Lead list */}
-      <div className="overflow-hidden rounded-xl border border-border divide-y divide-border">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
         {results.map((r) => {
           const cfg = HEALTH_CONFIG[r.health];
           return (
@@ -80,7 +80,7 @@ export function LeadHealthSection({ results }: LeadHealthSectionProps) {
               key={r.lead.id}
               href="/leads"
               className={cn(
-                "flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors",
+                "flex items-center gap-3 border-b border-border px-4 py-3.5 transition-colors last:border-0 hover:bg-muted/35",
                 cfg.row
               )}
             >
