@@ -21,7 +21,7 @@ const supabaseHost = supabaseUrl.replace(/^https?:\/\//, "");
 // out of scope for this sprint.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://*.supabase.co ${supabaseHost ? `https://${supabaseHost}` : ""}`,
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co ${supabaseHost ? `https://${supabaseHost} wss://${supabaseHost}` : ""}`,
