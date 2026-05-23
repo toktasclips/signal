@@ -4,6 +4,7 @@ import type {
   Task,
   Campaign,
   SalesEvent,
+  SemanticTag,
   RelationshipInsight,
   LeadHealthResult,
   LeadHealthStatus,
@@ -318,15 +319,81 @@ function ruleInactivePipeline(
   };
 }
 
+// ─── Semantic-based rules ─────────────────────────────────────────────────────
+
+function rulePricingObjectionPattern(
+  semanticTags: SemanticTag[],
+  leads: Lead[]
+): ComputedRelInsight | null {
+  const priceTags = semanticTags.filter((t) => t.tag === "price_objection");
+  const uniqueLeads = [...new Set(priceTags.map((t) => t.lead_id).filter(Boolean))];
+  if (uniqueLeads.length < 2) return null;
+
+  const leadNames = uniqueLeads
+    .map((id) => leads.find((l) => l.id === id)?.name)
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(", ");
+
+  return {
+    type: "pricing_objection_pattern",
+    title: `Pricing objections across ${uniqueLeads.length} leads`,
+    description: `Price has been raised as an objection by ${uniqueLeads.length} prospects (${leadNames}${uniqueLeads.length > 3 ? "..." : ""}). This may indicate a positioning or pricing strategy gap.`,
+    recommendation: "Consider preparing a stronger value proposition or ROI breakdown for sales conversations.",
+    severity: uniqueLeads.length >= 4 ? "critical" : "warning",
+    metadata: { lead_ids: uniqueLeads, count: uniqueLeads.length },
+  };
+}
+
+function ruleHighIntentOverdue(
+  semanticTags: SemanticTag[],
+  leads: Lead[]
+): ComputedRelInsight | null {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const highIntentLeadIds = new Set(
+    semanticTags
+      .filter((t) => t.tag === "high_intent")
+      .map((t) => t.lead_id)
+      .filter(Boolean) as string[]
+  );
+
+  const overdue = leads.filter(
+    (l) =>
+      highIntentLeadIds.has(l.id) &&
+      l.follow_up_date &&
+      new Date(l.follow_up_date) < today &&
+      !["won", "lost"].includes(l.status)
+  );
+
+  if (overdue.length === 0) return null;
+
+  const names = overdue.map((l) => l.name).slice(0, 2).join(", ");
+
+  return {
+    type: "high_intent_overdue",
+    title: `${overdue.length} high-intent lead${overdue.length > 1 ? "s" : ""} awaiting follow-up`,
+    description: `${names}${overdue.length > 2 ? ` and ${overdue.length - 2} more` : ""} showed high buying intent but ${overdue.length > 1 ? "have" : "has"} overdue follow-up dates.`,
+    recommendation: "Reach out today — high-intent leads that feel ignored rarely convert.",
+    severity: "critical",
+    relatedLeadId: overdue[0].id,
+    metadata: { lead_ids: overdue.map((l) => l.id) },
+  };
+}
+
 // ─── Main compute function ────────────────────────────────────────────────────
 
 export function computeRelationshipInsights(
   leads: Lead[],
   events: SalesEvent[],
   _tasks: Task[],
-  campaigns: Campaign[]
+  campaigns: Campaign[],
+  semanticTags: SemanticTag[] = []
 ): ComputedRelInsight[] {
   const rules = [
+    ruleHighIntentOverdue(semanticTags, leads),
+    rulePricingObjectionPattern(semanticTags, leads),
     ruleOverduePriorityLead(leads, events),
     ruleHighValueStuckLead(leads),
     ruleFollowupGap(leads),
@@ -358,15 +425,14 @@ export async function syncRelationshipInsights(
   const existingMap = new Map(existing?.map((i) => [i.type, i]) ?? []);
   const activeTypes = new Set(computed.map((i) => i.type));
 
-  // Remove stale
-  for (const [type] of existingMap) {
-    if (!activeTypes.has(type)) {
-      await supabase
-        .from("relationship_insights")
-        .delete()
-        .eq("user_id", userId)
-        .eq("type", type);
-    }
+  // Remove stale (batch delete)
+  const staleTypes = [...existingMap.keys()].filter((t) => !activeTypes.has(t));
+  if (staleTypes.length > 0) {
+    await supabase
+      .from("relationship_insights")
+      .delete()
+      .eq("user_id", userId)
+      .in("type", staleTypes);
   }
 
   // Upsert active (skip dismissed)

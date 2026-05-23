@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { leadSchema } from "@/lib/validations/lead";
 import { trackEvent } from "@/lib/events/track";
+import { analyzeAndSaveTags } from "@/lib/semantic/analyze";
 import type { ActionState } from "@/types";
 
 export async function createLead(
@@ -42,6 +43,16 @@ export async function createLead(
     metadata: { source: parsed.data.source, status: parsed.data.status },
   });
 
+  if (data?.id && parsed.data.notes) {
+    analyzeAndSaveTags({
+      userId: user.id,
+      leadId: data.id,
+      sourceType: "lead_note",
+      sourceId: data.id,
+      text: parsed.data.notes,
+    });
+  }
+
   revalidatePath("/leads");
   revalidatePath("/campaigns");
   return { status: "success", message: "Lead created." };
@@ -79,6 +90,15 @@ export async function updateLead(
     type: "lead_updated",
     title: `Lead updated: ${parsed.data.name}`,
     leadId: id,
+  });
+
+  // Analyze notes field for semantic signals (fire-and-forget)
+  analyzeAndSaveTags({
+    userId: user.id,
+    leadId: id,
+    sourceType: "lead_note",
+    sourceId: id,
+    text: parsed.data.notes,
   });
 
   revalidatePath("/leads");

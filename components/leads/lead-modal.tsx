@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { LeadForm } from "./lead-form";
+import { LeadSemanticSignals } from "@/components/signals/lead-semantic-signals";
 import { createLead, updateLead } from "@/actions/lead";
 import type { Campaign, Lead } from "@/types";
 
@@ -39,6 +40,7 @@ export function LeadModal({ open, onOpenChange, lead, campaigns }: LeadModalProp
           campaigns={campaigns}
           onSuccess={() => onOpenChange(false)}
         />
+        {isEdit && lead && <LeadSemanticSignals leadId={lead.id} />}
       </DialogContent>
     </Dialog>
   );

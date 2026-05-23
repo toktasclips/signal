@@ -27,6 +27,7 @@ export default async function IntelligencePage() {
     { data: tasks },
     { data: campaigns },
     { data: rawInsights },
+    { data: semanticTagsData },
   ] = await Promise.all([
     supabase
       .from("leads")
@@ -55,6 +56,10 @@ export default async function IntelligencePage() {
       .eq("user_id", user.id)
       .eq("is_dismissed", false)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("semantic_tags")
+      .select("*")
+      .eq("user_id", user.id),
   ]);
 
   const allLeads = leads ?? [];
@@ -67,7 +72,8 @@ export default async function IntelligencePage() {
     allLeads,
     allEvents,
     allTasks,
-    allCampaigns
+    allCampaigns,
+    semanticTagsData ?? []
   );
   syncRelationshipInsights(user.id, computed).catch(() => {});
 

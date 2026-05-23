@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { hotLeadUpdateSchema, followUpDateSchema, quickNoteSchema } from "@/lib/validations/lead";
 import { trackEvent } from "@/lib/events/track";
+import { analyzeAndSaveTags } from "@/lib/semantic/analyze";
 import type { ActionState, LeadPriority } from "@/types";
 
 async function getAuthUser() {
@@ -133,6 +134,14 @@ export async function updateQuickNote(id: string, note: string): Promise<ActionS
     .eq("user_id", user.id);
 
   if (error) return { status: "error", error: "Failed to update." };
+
+  analyzeAndSaveTags({
+    userId: user.id,
+    leadId: id,
+    sourceType: "quick_note",
+    sourceId: id,
+    text: parsed.data.quick_note,
+  });
 
   revalidatePath("/hot-list");
   return { status: "success" };

@@ -9,6 +9,7 @@ import {
   updateValueSchema,
 } from "@/lib/validations/pipeline";
 import { trackEvent } from "@/lib/events/track";
+import { analyzeAndSaveTags } from "@/lib/semantic/analyze";
 import type { ActionState, LeadStatus } from "@/types";
 
 const STAGE_LABELS: Record<LeadStatus, string> = {
@@ -150,6 +151,15 @@ export async function markLeadLost(
       : `${lead?.name ?? "Lead"} was marked as lost.`,
     leadId: id,
     metadata: { lost_reason: parsed.data.lost_reason },
+  });
+
+  // Analyze lost reason for semantic signals (fire-and-forget)
+  analyzeAndSaveTags({
+    userId: user.id,
+    leadId: id,
+    sourceType: "lost_reason",
+    sourceId: id,
+    text: parsed.data.lost_reason,
   });
 
   revalidatePipeline();

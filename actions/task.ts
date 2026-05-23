@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { taskSchema } from "@/lib/validations/task";
 import { trackEvent } from "@/lib/events/track";
+import { analyzeAndSaveTags } from "@/lib/semantic/analyze";
 import type { ActionState } from "@/types";
 
 async function getAuthUser() {
@@ -50,6 +51,16 @@ export async function createTask(
     leadId: parsed.data.lead_id ?? null,
     metadata: { priority: parsed.data.priority, due_date: parsed.data.due_date },
   });
+
+  if (data?.id && parsed.data.description) {
+    analyzeAndSaveTags({
+      userId: user.id,
+      leadId: parsed.data.lead_id ?? null,
+      sourceType: "task_description",
+      sourceId: data.id,
+      text: parsed.data.description,
+    });
+  }
 
   revalidateAll();
   return { status: "success" };

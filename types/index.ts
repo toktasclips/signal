@@ -174,6 +174,32 @@ export interface AuthUser {
   avatarUrl?: string;
 }
 
+export type SemanticTagName =
+  | "price_objection"
+  | "timing_objection"
+  | "spouse_objection"
+  | "trust_objection"
+  | "decision_delay"
+  | "high_intent"
+  | "warm_interest"
+  | "passive_interest"
+  | "ghosting_risk"
+  | "urgent_need"
+  | "positive_sentiment"
+  | "neutral_sentiment"
+  | "negative_sentiment";
+
+export interface SemanticTag {
+  id: string;
+  user_id: string;
+  lead_id: string | null;
+  source_type: string;
+  source_id: string | null;
+  tag: SemanticTagName;
+  confidence: number | null;
+  created_at: string;
+}
+
 export type ActionState<T = void> =
   | { status: "idle" }
   | { status: "loading" }

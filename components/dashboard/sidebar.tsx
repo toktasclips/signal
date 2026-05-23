@@ -14,6 +14,7 @@ import {
   Activity,
   Building2,
   BrainCircuit,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,11 @@ const navItems = [
     label: "Intelligence",
     href: "/intelligence",
     icon: BrainCircuit,
+  },
+  {
+    label: "Signals",
+    href: "/signals",
+    icon: Sparkles,
   },
   {
     label: "Activity",
