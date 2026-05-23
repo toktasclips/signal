@@ -3,10 +3,13 @@ import { RevenueChart } from "@/components/analytics/revenue-chart"
 import { ProfitChart } from "@/components/analytics/profit-chart"
 import { ReachCustomersChart } from "@/components/analytics/reach-customers-chart"
 import { WatchtimeChart } from "@/components/analytics/watchtime-chart"
-import { mockMetrics, TURKISH_MONTHS } from "@/lib/analytics/mock-data"
+import { TURKISH_MONTHS } from "@/lib/analytics/mock-data"
+import { getMonthlyMetrics } from "@/lib/analytics/data"
+import { createClient } from "@/lib/supabase/server"
 import { buildChartData, calcKpiSummary } from "@/lib/analytics/calculations"
 import { DollarSign, TrendingUp, Target, Activity, Youtube } from "lucide-react"
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 
 export const metadata: Metadata = { title: "Trend Dashboard" }
@@ -28,12 +31,24 @@ const kpiIcons = [
   <Youtube key="youtube" size={16} />,
 ]
 
-export default function TrendDashboardPage() {
-  const sortedMetrics = [...mockMetrics].sort((a, b) =>
+export default async function TrendDashboardPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const metrics = await getMonthlyMetrics(user.id)
+  const sortedMetrics = [...metrics].sort((a, b) =>
     a.year !== b.year ? a.year - b.year : a.month - b.month
   )
   const latestMetric = sortedMetrics[sortedMetrics.length - 1]
-  const kpiSummary = calcKpiSummary(mockMetrics)
+  const firstMetric = sortedMetrics[0]
+  const yearLabel =
+    firstMetric.year === latestMetric.year
+      ? `${latestMetric.year}`
+      : `${firstMetric.year}-${latestMetric.year}`
+  const kpiSummary = calcKpiSummary(metrics)
   const revenueData = buildChartData(sortedMetrics, "cash_collected")
   const profitData = buildChartData(sortedMetrics, "profit")
   const MONTHS = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"]
@@ -60,7 +75,7 @@ export default function TrendDashboardPage() {
           </span>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Son güncelleme: Aralık 2024
+          Son güncelleme: {TURKISH_MONTHS[latestMetric.month - 1]} {latestMetric.year}
         </p>
       </div>
 
@@ -86,13 +101,13 @@ export default function TrendDashboardPage() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <ChartPanel
             title="Gelir Trendi"
-            description="Aylık nakit tahsilat (2024)"
+            description={`Aylık nakit tahsilat (${yearLabel})`}
           >
             <RevenueChart data={revenueData} />
           </ChartPanel>
           <ChartPanel
             title="Kâr Trendi"
-            description="Aylık net kâr (2024)"
+            description={`Aylık net kâr (${yearLabel})`}
           >
             <ProfitChart data={profitData} />
           </ChartPanel>
@@ -112,7 +127,7 @@ export default function TrendDashboardPage() {
 
         <div className="text-center py-4 pb-8">
           <p className="text-xs text-muted-foreground">
-            Veriler mock datadan yükleniyor — gerçek zamanlı Supabase entegrasyonu için KPI Girişi sayfasını kullanın.
+            Veriler Supabase üzerinden okunuyor. KPI Girişi sayfasındaki kayıtlar bu dashboard'a yansır.
           </p>
         </div>
       </div>

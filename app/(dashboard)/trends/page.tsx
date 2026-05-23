@@ -1,13 +1,17 @@
 import { TrendCard } from "@/components/analytics/trend-card"
 import { InsightCard } from "@/components/analytics/insight-card"
-import { mockMetrics, mockInsights } from "@/lib/analytics/mock-data"
+import { mockInsights } from "@/lib/analytics/mock-data"
+import { getMonthlyMetrics } from "@/lib/analytics/data"
 import { calcChange, calcTrend } from "@/lib/analytics/calculations"
+import { createClient } from "@/lib/supabase/server"
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import type { MonthlyMetric } from "@/lib/analytics/types"
 
 export const metadata: Metadata = { title: "Trend Analizi" }
 
-interface MomentumRow { label: string; key: keyof typeof mockMetrics[0]; prefix: string; suffix: string; decimals: number }
+interface MomentumRow { label: string; key: keyof MonthlyMetric; prefix: string; suffix: string; decimals: number }
 
 const momentumRows: MomentumRow[] = [
   { label: "Nakit Tahsilat", key: "cash_collected", prefix: "₺", suffix: "", decimals: 0 },
@@ -28,26 +32,33 @@ function formatVal(val: number, prefix: string, suffix: string, decimals: number
   return `${prefix}${val.toFixed(decimals)}${suffix}`
 }
 
-export default function TrendsPage() {
-  const sorted = [...mockMetrics].sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month)
+export default async function TrendsPage() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const metrics = await getMonthlyMetrics(user.id)
+  const sorted = [...metrics].sort((a, b) => a.year !== b.year ? a.year - b.year : a.month - b.month)
   const latest = sorted[sorted.length - 1]
-  const prev = sorted[sorted.length - 2]
-  const getVals = (key: keyof typeof mockMetrics[0]) => sorted.map((m) => Number(m[key] ?? 0))
+  const prev = sorted[sorted.length - 2] ?? latest
+  const getVals = (key: keyof MonthlyMetric) => sorted.map((m) => Number(m[key] ?? 0))
 
   const trendCards = [
-    { label: "Toplam Gelir", key: "cash_collected" as keyof typeof mockMetrics[0], prefix: "₺", suffix: "" },
-    { label: "Kâr", key: "profit" as keyof typeof mockMetrics[0], prefix: "₺", suffix: "" },
-    { label: "ROAS", key: "roas" as keyof typeof mockMetrics[0], prefix: "", suffix: "x" },
-    { label: "Instagram Reach", key: "instagram_reach" as keyof typeof mockMetrics[0], prefix: "", suffix: "" },
-    { label: "Yeni Müşteri", key: "new_customers" as keyof typeof mockMetrics[0], prefix: "", suffix: "" },
-    { label: "Watch Hours", key: "youtube_watch_hours" as keyof typeof mockMetrics[0], prefix: "", suffix: " sa" },
+    { label: "Toplam Gelir", key: "cash_collected" as keyof MonthlyMetric, prefix: "₺", suffix: "" },
+    { label: "Kâr", key: "profit" as keyof MonthlyMetric, prefix: "₺", suffix: "" },
+    { label: "ROAS", key: "roas" as keyof MonthlyMetric, prefix: "", suffix: "x" },
+    { label: "Instagram Reach", key: "instagram_reach" as keyof MonthlyMetric, prefix: "", suffix: "" },
+    { label: "Yeni Müşteri", key: "new_customers" as keyof MonthlyMetric, prefix: "", suffix: "" },
+    { label: "Watch Hours", key: "youtube_watch_hours" as keyof MonthlyMetric, prefix: "", suffix: " sa" },
   ]
 
   return (
     <div className="min-h-full bg-background">
       <div className="border-b border-border bg-background/95 px-6 py-6 backdrop-blur lg:px-10">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Trend Analizi</h1>
-        <p className="mt-1 text-sm text-muted-foreground">2024 yıllık trend ve otomatik analiz</p>
+        <p className="mt-1 text-sm text-muted-foreground">Supabase verilerine göre trend ve otomatik analiz</p>
       </div>
 
       <div className="space-y-8 px-6 py-8 lg:px-10">
