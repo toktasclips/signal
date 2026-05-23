@@ -13,7 +13,8 @@ interface FormState {
   ad_spend: string; cpm: string; roas: string; instagram_reach: string
   instagram_impressions: string; new_customers: string; instagram_followers: string
   engagement: string; profile_visits: string; youtube_subscribers: string
-  youtube_watch_hours: string; shares: string; email_list: string
+  youtube_views: string; youtube_watch_hours: string; youtube_video_count: string
+  shares: string; email_list: string
   software_expenses: string; other_expenses: string; notes: string
 }
 
@@ -22,7 +23,8 @@ const initialState: FormState = {
   monthly_recurring_revenue: "", cash_collected: "", profit: "", ad_spend: "",
   cpm: "", roas: "", instagram_reach: "", instagram_impressions: "", new_customers: "",
   instagram_followers: "", engagement: "", profile_visits: "", youtube_subscribers: "",
-  youtube_watch_hours: "", shares: "", email_list: "", software_expenses: "",
+  youtube_views: "", youtube_watch_hours: "", youtube_video_count: "",
+  shares: "", email_list: "", software_expenses: "",
   other_expenses: "", notes: "",
 }
 
@@ -56,7 +58,9 @@ const sections: SectionConfig[] = [
   ]},
   { title: "YouTube", color: "text-red-700", fields: [
     { key: "youtube_subscribers", label: "Abone", step: "10", min: "0", placeholder: "0" },
+    { key: "youtube_views", label: "İzlenme Sayısı", step: "100", min: "0", placeholder: "0" },
     { key: "youtube_watch_hours", label: "İzlenme Saati", step: "10", min: "0", placeholder: "0" },
+    { key: "youtube_video_count", label: "Paylaşılan Video", step: "1", min: "0", placeholder: "0" },
   ]},
   { title: "Diğer", color: "text-muted-foreground", fields: [
     { key: "shares", label: "Paylaşım", step: "1", min: "0", placeholder: "0" },

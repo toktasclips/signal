@@ -16,7 +16,9 @@ export interface MonthlyMetric {
   engagement: number | null
   profile_visits: number | null
   youtube_subscribers: number | null
+  youtube_views?: number | null
   youtube_watch_hours: number | null
+  youtube_video_count?: number | null
   shares: number | null
   email_list: number | null
   software_expenses: number | null

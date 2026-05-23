@@ -15,7 +15,7 @@ metric_rows AS (
       400000::numeric, 287000::numeric, 287000::numeric, 400000::numeric,
       22000::numeric, 245000::integer, 465000::integer, 48::numeric, 18.18::numeric,
       NULL::integer, 32100::integer, NULL::numeric, NULL::integer,
-      NULL::integer, NULL::numeric, NULL::integer, 5000::numeric,
+      3100::integer, 3000::integer, 181::numeric, NULL::integer, NULL::integer, 5000::numeric,
       NULL::numeric, 373000::numeric,
       '25 Mart screenshot import. Software subscriptions tracked separately.'
     ),
@@ -24,7 +24,7 @@ metric_rows AS (
       500000::numeric, 397000::numeric, 397000::numeric, 500000::numeric,
       33000::numeric, 450000::integer, 710000::integer, 46.48::numeric, 12.03::numeric,
       2::integer, 33000::integer, NULL::numeric, NULL::integer,
-      3200::integer, 26000::numeric, 1500::integer, 5000::numeric,
+      3200::integer, 26000::integer, 1500::numeric, 2::integer, 2020::integer, 5000::numeric,
       NULL::numeric, 359000::numeric,
       '25 Nisan screenshot import. Software subscriptions tracked separately.'
     ),
@@ -33,7 +33,7 @@ metric_rows AS (
       726000::numeric, 548000::numeric, 548000::numeric, 726000::numeric,
       29000::numeric, 300000::integer, 486000::integer, 59.67::numeric, 18.90::numeric,
       3::integer, 33500::integer, NULL::numeric, NULL::integer,
-      4000::integer, 11600::numeric, 659::integer, 5000::numeric,
+      4000::integer, 11600::integer, 659::numeric, 3::integer, 2217::integer, 5000::numeric,
       NULL::numeric, 514000::numeric,
       '25 Mayıs screenshot import. Software subscriptions tracked separately.'
     )
@@ -41,7 +41,8 @@ metric_rows AS (
     month, year, total_goal, new_deal_value, monthly_recurring_revenue,
     cash_collected, ad_spend, instagram_reach, instagram_impressions,
     cpm, roas, new_customers, instagram_followers, engagement, shares,
-    youtube_subscribers, youtube_watch_hours, email_list, software_expenses,
+    youtube_subscribers, youtube_views, youtube_watch_hours, youtube_video_count,
+    email_list, software_expenses,
     other_expenses, profit, notes
   )
 ),
@@ -60,7 +61,8 @@ upsert_metrics AS (
     user_id, month, year, total_goal, new_deal_value, monthly_recurring_revenue,
     cash_collected, ad_spend, instagram_reach, instagram_impressions,
     cpm, roas, new_customers, instagram_followers, engagement, shares,
-    youtube_subscribers, youtube_watch_hours, email_list, software_expenses,
+    youtube_subscribers, youtube_views, youtube_watch_hours, youtube_video_count,
+    email_list, software_expenses,
     other_expenses, profit, notes
   )
   SELECT
@@ -68,7 +70,8 @@ upsert_metrics AS (
     rows.monthly_recurring_revenue, rows.cash_collected, rows.ad_spend,
     rows.instagram_reach, rows.instagram_impressions, rows.cpm, rows.roas,
     rows.new_customers, rows.instagram_followers, rows.engagement, rows.shares,
-    rows.youtube_subscribers, rows.youtube_watch_hours, rows.email_list,
+    rows.youtube_subscribers, rows.youtube_views, rows.youtube_watch_hours,
+    rows.youtube_video_count, rows.email_list,
     rows.software_expenses, rows.other_expenses, rows.profit, rows.notes
   FROM metric_rows rows
   CROSS JOIN owner
@@ -88,7 +91,9 @@ upsert_metrics AS (
     engagement = EXCLUDED.engagement,
     shares = EXCLUDED.shares,
     youtube_subscribers = EXCLUDED.youtube_subscribers,
+    youtube_views = EXCLUDED.youtube_views,
     youtube_watch_hours = EXCLUDED.youtube_watch_hours,
+    youtube_video_count = EXCLUDED.youtube_video_count,
     email_list = EXCLUDED.email_list,
     software_expenses = EXCLUDED.software_expenses,
     other_expenses = EXCLUDED.other_expenses,

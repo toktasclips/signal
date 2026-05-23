@@ -46,7 +46,9 @@ const businessMetricKeys: Array<keyof MonthlyMetric> = [
   "instagram_followers",
   "engagement",
   "youtube_subscribers",
+  "youtube_views",
   "youtube_watch_hours",
+  "youtube_video_count",
   "email_list",
   "software_expenses",
 ]
@@ -253,7 +255,9 @@ const metricLogGroups: Array<{
     title: "YouTube",
     items: [
       { label: "Abone", key: "youtube_subscribers", format: "number" },
+      { label: "İzlenme Sayısı", key: "youtube_views", format: "number" },
       { label: "İzlenme Saati", key: "youtube_watch_hours", format: "hours" },
+      { label: "Paylaşılan Video", key: "youtube_video_count", format: "number" },
     ],
   },
 ]

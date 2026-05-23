@@ -43,7 +43,9 @@ const businessMetricKeys: Array<keyof MonthlyMetric> = [
   "instagram_followers",
   "engagement",
   "youtube_subscribers",
+  "youtube_views",
   "youtube_watch_hours",
+  "youtube_video_count",
   "email_list",
   "software_expenses",
   "profit",
@@ -73,6 +75,7 @@ const trendCards: MetricDefinition[] = [
   { label: "ROAS", key: "roas", prefix: "", suffix: "x", decimals: 2, getValue: valueOf("roas") },
   { label: "Yeni Müşteri", key: "new_customers", prefix: "", suffix: "", decimals: 0, getValue: valueOf("new_customers") },
   { label: "Watch Hours", key: "youtube_watch_hours", prefix: "", suffix: " sa", decimals: 0, getValue: valueOf("youtube_watch_hours") },
+  { label: "YouTube İzlenme", key: "youtube_views", prefix: "", suffix: "", decimals: 0, getValue: valueOf("youtube_views") },
 ]
 
 const momentumRows: MetricDefinition[] = [
@@ -147,6 +150,7 @@ function buildTrendInsights(
   const adSpend = sumFor(windowMetrics, "ad_spend")
   const roasAverage = averageFor(windowMetrics, valueOf("roas"))
   const watchHours = sumFor(windowMetrics, "youtube_watch_hours")
+  const youtubeViews = sumFor(windowMetrics, "youtube_views")
   const rangeLabel = range === "1" ? "seçili ay" : range === "all" ? "tüm dönem" : `son ${range} ay`
 
   return [
@@ -193,12 +197,12 @@ function buildTrendInsights(
     },
     {
       id: "watchtime",
-      title: watchHours > 0 ? "İçerik motoru takip edilebilir" : "Watch time verisi eksik",
+      title: watchHours > 0 || youtubeViews > 0 ? "İçerik motoru takip edilebilir" : "YouTube verisi eksik",
       description:
-        watchHours > 0
-          ? `${rangeLabel} toplam watch time ${formatVal(watchHours, "", " sa", 0)}. Bunu toplam gelirle birlikte okumak daha doğru.`
-          : `${rangeLabel} için watch time kaydı yok. İçerik etkisini analiz etmek için bu alanı doldurmak gerekir.`,
-      type: watchHours > 0 ? "positive" : "neutral",
+        watchHours > 0 || youtubeViews > 0
+          ? `${rangeLabel} toplam izlenme ${formatVal(youtubeViews, "", "", 0)}, watch time ${formatVal(watchHours, "", " sa", 0)}. İkisini gelirle birlikte okumak daha doğru.`
+          : `${rangeLabel} için YouTube izlenme kaydı yok. İçerik etkisini analiz etmek için bu alanları doldurmak gerekir.`,
+      type: watchHours > 0 || youtubeViews > 0 ? "positive" : "neutral",
     },
   ]
 }

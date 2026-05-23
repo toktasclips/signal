@@ -61,7 +61,9 @@ const businessMetricKeys: Array<keyof MonthlyMetric> = [
   "instagram_followers",
   "engagement",
   "youtube_subscribers",
+  "youtube_views",
   "youtube_watch_hours",
+  "youtube_video_count",
   "email_list",
   "software_expenses",
 ]
