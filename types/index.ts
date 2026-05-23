@@ -97,6 +97,50 @@ export interface BusinessContext {
   updated_at: string;
 }
 
+export interface RelationshipInsight {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  description: string;
+  recommendation: string | null;
+  severity: InsightSeverity;
+  is_read: boolean;
+  is_dismissed: boolean;
+  related_lead_id: string | null;
+  related_campaign_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export type LeadHealthStatus = "high_momentum" | "healthy" | "at_risk" | "stale";
+
+export interface LeadHealthResult {
+  lead: Lead;
+  health: LeadHealthStatus;
+  daysSinceActivity: number;
+  factors: string[];
+}
+
+export interface PipelineVelocity {
+  avgDays: number;
+  totalWon: number;
+  fastestLead: { name: string; days: number } | null;
+  slowestLead: { name: string; days: number } | null;
+}
+
+export interface CampaignStat {
+  id: string;
+  name: string;
+  type: string;
+  totalLeads: number;
+  wonCount: number;
+  closeRate: number;
+  wonRevenue: number;
+  avgDealValue: number;
+  avgVelocityDays: number | null;
+}
+
 export type InsightSeverity = "info" | "warning" | "critical" | "success";
 
 export interface Insight {
