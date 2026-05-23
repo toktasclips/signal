@@ -14,7 +14,7 @@ import {
 interface WatchtimePoint {
   month: string
   watchHours: number
-  mrr: number
+  revenue: number
 }
 
 interface WatchtimeChartProps {
@@ -46,7 +46,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
           />
           <span className="text-muted-foreground">{entry.name}:</span>
           <span className="font-medium text-foreground tabular-nums">
-            {entry.name === "MRR"
+            {entry.name === "Toplam Gelir"
               ? `₺${entry.value.toLocaleString("tr-TR")}`
               : `${entry.value.toLocaleString("tr-TR")} sa`}
           </span>
@@ -120,8 +120,8 @@ export function WatchtimeChart({ data }: WatchtimeChartProps) {
         <Line
           yAxisId="right"
           type="monotone"
-          dataKey="mrr"
-          name="MRR"
+          dataKey="revenue"
+          name="Toplam Gelir"
           stroke="#5E6B5C"
           strokeWidth={2}
           dot={{ r: 3, fill: "#5E6B5C", strokeWidth: 0 }}

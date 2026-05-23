@@ -7,7 +7,7 @@ import { TURKISH_MONTHS } from "@/lib/analytics/mock-data"
 import { getMonthlyMetrics } from "@/lib/analytics/data"
 import { createClient } from "@/lib/supabase/server"
 import { buildChartData, calcKpiSummaryForPeriod } from "@/lib/analytics/calculations"
-import { DollarSign, TrendingUp, Target, Activity, Youtube } from "lucide-react"
+import { DollarSign, TrendingUp, Target, Percent, Youtube } from "lucide-react"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
@@ -21,15 +21,15 @@ function formatValue(value: number, prefix: string, suffix: string): string {
     if (value >= 1000) return `₺${(value / 1000).toFixed(0)}K`
     return `₺${value.toLocaleString("tr-TR")}`
   }
+  if (suffix === "%") return `${value.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}%`
   return `${prefix}${value.toLocaleString("tr-TR")}${suffix}`
 }
 
 const kpiIcons = [
   <DollarSign key="dollar" size={16} />,
   <TrendingUp key="trend" size={16} />,
+  <Percent key="margin" size={16} />,
   <Target key="target" size={16} />,
-  <Activity key="activity" size={16} />,
-  <DollarSign key="mrr" size={16} />,
   <Youtube key="youtube" size={16} />,
 ]
 
@@ -104,7 +104,7 @@ export default async function TrendDashboardPage({
   const watchtimeData = chartMetrics.map((m) => ({
     month: `${TURKISH_MONTHS[m.month - 1].slice(0, 3)} ${String(m.year).slice(-2)}`,
     watchHours: m.youtube_watch_hours ?? 0,
-    mrr: m.monthly_recurring_revenue ?? 0,
+    revenue: m.cash_collected ?? 0,
   }))
 
   return (
@@ -154,7 +154,7 @@ export default async function TrendDashboardPage({
             title="Temel Metrikler"
             description="Gelir, karlılık ve kanal performansı için executive görünüm."
           />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
             {kpiSummary.map((kpi, i) => (
               <KpiCard
                 key={kpi.key}
@@ -187,12 +187,14 @@ export default async function TrendDashboardPage({
             <ReachCustomersChart data={reachCustomersData} />
           </ChartPanel>
           <ChartPanel
-            title="Watch Time vs MRR"
-            description="YouTube izlenme süresi ve aylık tekrarlayan gelir"
+            title="Watch Time vs Toplam Gelir"
+            description="YouTube izlenme süresi ve aylık nakit tahsilat"
           >
             <WatchtimeChart data={watchtimeData} />
           </ChartPanel>
         </div>
+
+        <MetricLogPanel metric={selectedMetric} />
 
         <div className="text-center py-4 pb-8">
           <p className="text-xs text-muted-foreground">
@@ -202,6 +204,104 @@ export default async function TrendDashboardPage({
       </div>
     </div>
   )
+}
+
+const metricLogGroups: Array<{
+  title: string
+  items: Array<{
+    label: string
+    key: keyof MonthlyMetric
+    format: "currency" | "number" | "decimal" | "hours" | "ratio" | "text"
+  }>
+}> = [
+  {
+    title: "Finansal",
+    items: [
+      { label: "Hedeflenen Gelir", key: "total_goal", format: "currency" },
+      { label: "Yeni Deal Value", key: "new_deal_value", format: "currency" },
+      { label: "Toplam Gelir", key: "cash_collected", format: "currency" },
+      { label: "Kâr", key: "profit", format: "currency" },
+      { label: "Yazılım Harcamaları", key: "software_expenses", format: "currency" },
+      { label: "Diğer Harcamalar", key: "other_expenses", format: "currency" },
+    ],
+  },
+  {
+    title: "Reklam",
+    items: [
+      { label: "Reklam Harcaması", key: "ad_spend", format: "currency" },
+      { label: "CPM", key: "cpm", format: "currency" },
+      { label: "ROAS", key: "roas", format: "ratio" },
+      { label: "Instagram Reach", key: "instagram_reach", format: "number" },
+      { label: "Instagram Gösterim", key: "instagram_impressions", format: "number" },
+    ],
+  },
+  {
+    title: "Kitle & İçerik",
+    items: [
+      { label: "Yeni Müşteri", key: "new_customers", format: "number" },
+      { label: "Instagram Takipçi", key: "instagram_followers", format: "number" },
+      { label: "Toplam Etkileşim", key: "engagement", format: "number" },
+      { label: "Paylaşım", key: "shares", format: "number" },
+      { label: "Mail Listesi", key: "email_list", format: "number" },
+    ],
+  },
+  {
+    title: "YouTube",
+    items: [
+      { label: "Abone", key: "youtube_subscribers", format: "number" },
+      { label: "İzlenme Saati", key: "youtube_watch_hours", format: "hours" },
+    ],
+  },
+]
+
+function MetricLogPanel({ metric }: { metric: MonthlyMetric }) {
+  return (
+    <section className="space-y-3">
+      <SectionHeader
+        title="Aylık Veri Logu"
+        description={`${TURKISH_MONTHS[metric.month - 1]} ${metric.year} için girilen ham kayıtlar ve eksik alanlar.`}
+      />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        {metricLogGroups.map((group) => (
+          <div key={group.title} className="rounded-xl border border-border bg-card p-5 shadow-card">
+            <h3 className="mb-4 text-sm font-semibold text-foreground">{group.title}</h3>
+            <div className="divide-y divide-border">
+              {group.items.map((item) => {
+                const value = metric[item.key]
+                const missing = value === null || value === undefined || value === ""
+                return (
+                  <div key={item.key} className="flex items-center justify-between gap-4 py-2.5 text-sm">
+                    <span className="text-muted-foreground">{item.label}</span>
+                    <span className={missing ? "text-muted-foreground/55" : "font-medium text-foreground tabular-nums"}>
+                      {missing ? "Eksik" : formatLogValue(value, item.format)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      {metric.notes && (
+        <div className="rounded-xl border border-border bg-card p-5 shadow-card">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Not</h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">{metric.notes}</p>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function formatLogValue(
+  value: MonthlyMetric[keyof MonthlyMetric],
+  format: "currency" | "number" | "decimal" | "hours" | "ratio" | "text"
+): string {
+  if (typeof value !== "number") return String(value)
+  if (format === "currency") return `₺${value.toLocaleString("tr-TR")}`
+  if (format === "hours") return `${value.toLocaleString("tr-TR")} sa`
+  if (format === "ratio") return `${value.toLocaleString("tr-TR")}x`
+  if (format === "decimal") return value.toLocaleString("tr-TR", { maximumFractionDigits: 2 })
+  return value.toLocaleString("tr-TR")
 }
 
 function SectionHeader({

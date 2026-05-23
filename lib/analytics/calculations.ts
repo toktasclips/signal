@@ -117,35 +117,46 @@ export function calcKpiSummaryForPeriod(
     m ? Number(m[key] ?? 0) : 0
 
   const items: Array<{
-    key: keyof MonthlyMetric
+    key: keyof MonthlyMetric | "profit_margin"
     label: string
     prefix: string
     suffix: string
+    getValue?: (metric: MonthlyMetric | null) => number
   }> = [
     { key: "cash_collected", label: "Toplam Gelir", prefix: "₺", suffix: "" },
     { key: "profit", label: "Kâr", prefix: "₺", suffix: "" },
-    { key: "roas", label: "ROAS", prefix: "", suffix: "x" },
     {
-      key: "monthly_recurring_revenue",
-      label: "MRR",
-      prefix: "₺",
-      suffix: "",
+      key: "profit_margin",
+      label: "Kârlılık",
+      prefix: "",
+      suffix: "%",
+      getValue: (metric) => {
+        const revenue = getVal(metric, "cash_collected")
+        if (revenue === 0) return 0
+        return (getVal(metric, "profit") / revenue) * 100
+      },
     },
+    { key: "roas", label: "ROAS", prefix: "", suffix: "x" },
     {
       key: "youtube_watch_hours",
       label: "Watch Time",
       prefix: "",
       suffix: " sa",
     },
-    { key: "instagram_reach", label: "Reach", prefix: "", suffix: "" },
   ]
 
   return items.map((item) => {
-    const value = getVal(selected, item.key)
-    const prevValue = getVal(prev, item.key)
+    const value = item.getValue
+      ? item.getValue(selected)
+      : getVal(selected, item.key as keyof MonthlyMetric)
+    const prevValue = item.getValue
+      ? item.getValue(prev)
+      : getVal(prev, item.key as keyof MonthlyMetric)
     const allValues = sorted
       .slice(0, selectedIndex + 1)
-      .map((m) => getVal(m, item.key))
+      .map((m) =>
+        item.getValue ? item.getValue(m) : getVal(m, item.key as keyof MonthlyMetric)
+      )
     return {
       key: item.key as string,
       label: item.label,
