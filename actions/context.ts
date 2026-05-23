@@ -33,6 +33,6 @@ export async function saveBusinessContext(
   if (error) return { status: "error", error: "Failed to save context." };
 
   revalidatePath("/context");
-  revalidatePath("/dashboard");
+  revalidatePath("/leads");
   return { status: "success", message: "Business context saved." };
 }

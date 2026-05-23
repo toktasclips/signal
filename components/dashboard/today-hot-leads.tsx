@@ -17,7 +17,7 @@ export function TodayHotLeads({ leads }: TodayHotLeadsProps) {
           <h2 className="text-sm font-semibold text-foreground">Today&apos;s Hot Leads</h2>
         </div>
         <Link
-          href="/hot-list"
+          href="/leads?view=hot-list"
           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           View all <ArrowRight className="h-3 w-3" />

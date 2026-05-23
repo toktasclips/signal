@@ -66,7 +66,7 @@ export async function login(
     };
   }
 
-  redirect("/hot-list");
+  redirect("/leads");
 }
 
 export async function register(
@@ -212,7 +212,7 @@ export async function updatePassword(
     };
   }
 
-  redirect("/hot-list");
+  redirect("/leads");
 }
 
 export async function logout(): Promise<void> {

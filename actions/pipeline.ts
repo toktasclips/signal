@@ -29,7 +29,7 @@ async function getAuthUser() {
 
 function revalidatePipeline() {
   revalidatePath("/pipeline");
-  revalidatePath("/dashboard");
+  revalidatePath("/leads");
   revalidatePath("/activity");
 }
 

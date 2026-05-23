@@ -23,7 +23,7 @@ export function PipelineSnapshot({
           </h2>
         </div>
         <Link
-          href="/pipeline"
+          href="/leads?view=pipeline"
           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           View pipeline <ArrowRight className="h-3 w-3" />

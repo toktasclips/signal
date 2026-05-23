@@ -15,7 +15,7 @@ async function getAuthUser() {
 
 function revalidateAll() {
   revalidatePath("/tasks");
-  revalidatePath("/dashboard");
+  revalidatePath("/leads");
   revalidatePath("/activity");
 }
 

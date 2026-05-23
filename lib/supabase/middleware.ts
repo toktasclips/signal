@@ -54,7 +54,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && (isPublicRoute || isRootPath)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/hot-list";
+    url.pathname = "/leads";
     return NextResponse.redirect(url);
   }
 

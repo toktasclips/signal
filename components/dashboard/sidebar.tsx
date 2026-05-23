@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Flame,
-  KanbanSquare,
   Users,
   CalendarDays,
   Megaphone,
@@ -23,24 +21,14 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   {
-    label: "Hot List",
-    href: "/hot-list",
-    icon: Flame,
-  },
-  {
-    label: "Pipeline",
-    href: "/pipeline",
-    icon: KanbanSquare,
+    label: "Sales",
+    href: "/leads",
+    icon: Users,
   },
   {
     label: "Campaigns",
     href: "/campaigns",
     icon: Megaphone,
-  },
-  {
-    label: "Leads",
-    href: "/leads",
-    icon: Users,
   },
   {
     label: "Tasks",

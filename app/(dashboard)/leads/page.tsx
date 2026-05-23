@@ -1,17 +1,29 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { LeadsClient } from "@/components/leads/leads-client";
+import { SalesWorkspace } from "@/components/leads/sales-workspace";
 import type { Campaign, Lead } from "@/types";
 
 export const metadata: Metadata = {
-  title: "Leads",
+  title: "Sales",
 };
 
-export default async function LeadsPage() {
+type SalesView = "leads" | "hot-list" | "pipeline";
+
+function normalizeView(view?: string): SalesView {
+  if (view === "hot-list" || view === "pipeline") return view;
+  return "leads";
+}
+
+export default async function LeadsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ view?: string }>;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+  const params = await searchParams;
 
   const [{ data: leads }, { data: campaigns }] = await Promise.all([
     supabase
@@ -27,17 +39,11 @@ export default async function LeadsPage() {
   ]);
 
   return (
-    <div className="px-6 py-8 lg:px-10 max-w-4xl mx-auto space-y-8">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-foreground tracking-tight">Leads</h1>
-        <p className="text-sm text-muted-foreground">
-          Track and manage every prospect in one clean workspace.
-        </p>
-      </div>
-
-      <LeadsClient
-        initialLeads={(leads as Lead[]) ?? []}
+    <div className="mx-auto max-w-[1400px] px-6 py-8 lg:px-10">
+      <SalesWorkspace
+        leads={(leads as Lead[]) ?? []}
         campaigns={(campaigns as Campaign[]) ?? []}
+        initialView={normalizeView(params?.view)}
       />
     </div>
   );

@@ -43,7 +43,6 @@ export async function toggleHotLead(id: string, currentValue: boolean): Promise<
 
   revalidatePath("/hot-list");
   revalidatePath("/leads");
-  revalidatePath("/dashboard");
   return { status: "success" };
 }
 
@@ -116,7 +115,7 @@ export async function updateFollowUpDate(id: string, date: string | null): Promi
   }
 
   revalidatePath("/hot-list");
-  revalidatePath("/dashboard");
+  revalidatePath("/leads");
   return { status: "success" };
 }
 
@@ -144,5 +143,6 @@ export async function updateQuickNote(id: string, note: string): Promise<ActionS
   });
 
   revalidatePath("/hot-list");
+  revalidatePath("/leads");
   return { status: "success" };
 }
