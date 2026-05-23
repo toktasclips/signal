@@ -8,7 +8,6 @@ import {
   Megaphone,
   CheckSquare,
   Settings,
-  Activity,
   Building2,
   BrainCircuit,
   Sparkles,
@@ -50,11 +49,6 @@ const navItems = [
     label: "Signals",
     href: "/signals",
     icon: Sparkles,
-  },
-  {
-    label: "Activity",
-    href: "/activity",
-    icon: Activity,
   },
   {
     label: "Calendar",
