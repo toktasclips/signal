@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { loginRatelimit, registerRatelimit } from "@/lib/ratelimit";
+import { loginRatelimit, registerRatelimit, forgotPasswordRatelimit } from "@/lib/ratelimit";
 import {
   loginSchema,
   registerSchema,
@@ -126,6 +126,12 @@ export async function forgotPassword(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const ip = await getIp();
+  const { success } = await forgotPasswordRatelimit.limit(ip);
+  if (!success) {
+    return { status: "error", error: "Too many attempts. Please try again later." };
+  }
+
   const raw = {
     email: formData.get("email") as string,
   };

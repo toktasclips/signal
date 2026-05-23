@@ -17,3 +17,9 @@ export const registerRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(3, "1 h"),
   prefix: "rl:register",
 });
+
+export const forgotPasswordRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(3, "1 h"),
+  prefix: "rl:forgot",
+});
