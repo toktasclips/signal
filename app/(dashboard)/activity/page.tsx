@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/supabase/session";
+import { createClient } from "@/lib/supabase/server";
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import type { SalesEvent } from "@/types";
 
 export const metadata: Metadata = { title: "Activity" };
 
 export default async function ActivityPage() {
-  const { supabase, user } = await getSessionUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { data } = await supabase

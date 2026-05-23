@@ -1,5 +1,5 @@
 import { Sparkles, AlertTriangle, TrendingUp, Ghost, Zap } from "lucide-react";
-import { getSessionUser } from "@/lib/supabase/session";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { SemanticTagBadge, TAG_CONFIG } from "@/components/signals/semantic-tag-badge";
 import type { SemanticTag, SemanticTagName } from "@/types";
@@ -55,7 +55,8 @@ function TagRow({ tag, count, leads }: TagRowProps) {
 }
 
 export default async function SignalsPage() {
-  const { supabase, user } = await getSessionUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const [{ data: tagsData }, { data: leadsData }] = await Promise.all([

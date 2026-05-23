@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/supabase/session";
+import { createClient } from "@/lib/supabase/server";
 import { LeadsClient } from "@/components/leads/leads-client";
 import type { Campaign, Lead } from "@/types";
 
@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default async function LeadsPage() {
-  const { supabase, user } = await getSessionUser();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const [{ data: leads }, { data: campaigns }] = await Promise.all([
