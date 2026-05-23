@@ -58,6 +58,14 @@ export const updatePasswordSchema = z
     path: ["confirmPassword"],
   });
 
+export const avatarUrlSchema = z
+  .string()
+  .url()
+  .startsWith("https://")
+  .max(500)
+  .optional()
+  .nullable();
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

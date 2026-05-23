@@ -75,7 +75,7 @@ export function Topbar({ user, onMenuClick }: TopbarProps) {
               aria-label="User menu"
             >
               <Avatar className="h-8 w-8">
-                {user.avatarUrl && (
+                {user.avatarUrl?.startsWith("https://") && (
                   <AvatarImage src={user.avatarUrl} alt={displayName} />
                 )}
                 <AvatarFallback className="text-xs">
