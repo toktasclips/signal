@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   Flame,
   KanbanSquare,
   Users,
@@ -23,11 +22,6 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
   {
     label: "Hot List",
     href: "/hot-list",
@@ -108,15 +102,12 @@ export function Sidebar({ onNavClick }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-0.5">
           {navItems.map((item) => {
-            const isActive =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(item.href);
+            const isActive = pathname.startsWith(item.href);
 
             return (
               <li key={item.href}>
                 <Link
-                  href={item.soon ? "/dashboard" : item.href}
+                  href={item.soon ? "#" : item.href}
                   onClick={onNavClick}
                   className={cn(
                     "group flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-all duration-150",
