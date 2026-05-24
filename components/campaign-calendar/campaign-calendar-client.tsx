@@ -14,6 +14,7 @@ import {
 import { deleteCampaignCalendarItem } from "@/actions/campaign";
 import { Button } from "@/components/ui/button";
 import { CampaignCalendarModal } from "./campaign-calendar-modal";
+import { LaunchPlanModal } from "./launch-plan-modal";
 import { cn } from "@/lib/utils";
 import type {
   CampaignCalendarItem,
@@ -81,6 +82,7 @@ function dateTone(item: CampaignCalendarItem): string {
 
 export function CampaignCalendarClient({ items }: CampaignCalendarClientProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [launchModalOpen, setLaunchModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<CampaignCalendarItem | null>(null);
   const [filter, setFilter] = useState<ViewFilter>("active");
   const [isPending, startTransition] = useTransition();
@@ -180,10 +182,16 @@ export function CampaignCalendarClient({ items }: CampaignCalendarClientProps) {
             </button>
           ))}
         </div>
-        <Button size="sm" onClick={handleCreate}>
-          <Plus className="h-4 w-4" />
-          Yeni Hamle
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => setLaunchModalOpen(true)}>
+            <CalendarDays className="h-4 w-4" />
+            Lansman Planı
+          </Button>
+          <Button size="sm" onClick={handleCreate}>
+            <Plus className="h-4 w-4" />
+            Yeni Hamle
+          </Button>
+        </div>
       </div>
 
       {filteredItems.length === 0 ? (
@@ -222,6 +230,11 @@ export function CampaignCalendarClient({ items }: CampaignCalendarClientProps) {
           if (!open) setEditItem(null);
         }}
         item={editItem}
+      />
+
+      <LaunchPlanModal
+        open={launchModalOpen}
+        onOpenChange={setLaunchModalOpen}
       />
     </>
   );

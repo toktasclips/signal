@@ -95,3 +95,34 @@ export const campaignCalendarItemSchema = z
   );
 
 export type CampaignCalendarItemInput = z.infer<typeof campaignCalendarItemSchema>;
+
+export const campaignLaunchPlanItemSchema = z.object({
+  day: z.number().int().min(1).max(14),
+  title: z.string().min(1, "Title is required").max(180, "Title too long"),
+  offer: z.string().min(1, "Offer is required").max(220, "Offer too long"),
+  notes: z.string().max(2000).optional().nullable().transform((v) => v || null),
+  expected_revenue: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
+    z.number().positive("Must be positive").nullable()
+  ),
+});
+
+export const campaignLaunchPlanSchema = z.object({
+  launch_name: z.string().min(1, "Launch name is required").max(120, "Launch name too long"),
+  duration: z.preprocess(
+    (v) => Number(v),
+    z.union([z.literal(7), z.literal(14)])
+  ),
+  start_date: z.string().min(1, "Start date is required"),
+  target_segment: z
+    .string()
+    .min(1, "Target segment is required")
+    .max(180, "Target segment too long"),
+  channel: z.enum(CAMPAIGN_CALENDAR_CHANNELS),
+  items: z
+    .array(campaignLaunchPlanItemSchema)
+    .min(7)
+    .max(14),
+});
+
+export type CampaignLaunchPlanInput = z.infer<typeof campaignLaunchPlanSchema>;

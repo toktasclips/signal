@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   assignLeadSchema,
   campaignCalendarItemSchema,
+  campaignLaunchPlanSchema,
   campaignSchema,
 } from "@/lib/validations/campaign";
 import { trackEvent } from "@/lib/events/track";
@@ -288,6 +289,103 @@ export async function deleteCampaignCalendarItem(id: string): Promise<ActionStat
     .eq("user_id", user.id);
 
   if (error) return { status: "error", error: "Failed to delete campaign plan." };
+
+  revalidateAll();
+  return { status: "success" };
+}
+
+function addDays(date: string, days: number): string {
+  const next = new Date(`${date}T00:00:00`);
+  next.setDate(next.getDate() + days);
+  const year = next.getFullYear();
+  const month = String(next.getMonth() + 1).padStart(2, "0");
+  const day = String(next.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export async function createCampaignLaunchPlan(
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  let items: unknown = [];
+  try {
+    items = JSON.parse(String(formData.get("items") ?? "[]"));
+  } catch {
+    return { status: "error", error: "Launch cards could not be read." };
+  }
+
+  const raw = {
+    launch_name: formData.get("launch_name"),
+    duration: formData.get("duration"),
+    start_date: formData.get("start_date"),
+    target_segment: formData.get("target_segment"),
+    channel: formData.get("channel"),
+    items,
+  };
+
+  const parsed = campaignLaunchPlanSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Validation failed.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const launchItems = parsed.data.items.slice(0, parsed.data.duration);
+  if (launchItems.length !== parsed.data.duration) {
+    return {
+      status: "error",
+      error: `Launch plan must include ${parsed.data.duration} cards.`,
+    };
+  }
+
+  const { error } = await supabase.from("campaign_calendar_items").insert(
+    launchItems.map((item) => {
+      const plannedDate = addDays(parsed.data.start_date, item.day - 1);
+
+      return {
+        user_id: user.id,
+        title: `${parsed.data.launch_name} · Gün ${item.day}: ${item.title}`,
+        target_segment: parsed.data.target_segment,
+        offer: item.offer,
+        channel: parsed.data.channel,
+        planned_date: plannedDate,
+        end_date: plannedDate,
+        expected_revenue: item.expected_revenue,
+        status: "planned",
+        notes: [
+          `Lansman: ${parsed.data.launch_name}`,
+          `Gün ${item.day}/${parsed.data.duration}`,
+          item.notes,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      };
+    })
+  );
+
+  if (error) {
+    return {
+      status: "error",
+      error: `Failed to create launch plan: ${error.message}`,
+    };
+  }
+
+  trackEvent({
+    userId: user.id,
+    type: "campaign_calendar_created",
+    title: `Launch plan created: ${parsed.data.launch_name}`,
+    description: `${parsed.data.duration} günlük ${parsed.data.channel} planı ${parsed.data.start_date} tarihinde başlıyor.`,
+    metadata: {
+      channel: parsed.data.channel,
+      duration: parsed.data.duration,
+      target_segment: parsed.data.target_segment,
+    },
+  });
 
   revalidateAll();
   return { status: "success" };
