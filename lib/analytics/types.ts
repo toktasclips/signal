@@ -32,6 +32,15 @@ export interface MonthlyMetric {
   stripe_synced_at?: string | null
   stripe_period_start?: string | null
   stripe_period_end?: string | null
+  meta_ad_spend?: number | null
+  meta_reach?: number | null
+  meta_impressions?: number | null
+  meta_cpm?: number | null
+  meta_clicks?: number | null
+  meta_ctr?: number | null
+  meta_synced_at?: string | null
+  meta_period_start?: string | null
+  meta_period_end?: string | null
   notes: string | null
   created_at: string
   updated_at: string

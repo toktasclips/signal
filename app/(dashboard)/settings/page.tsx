@@ -1,6 +1,8 @@
 import { STRIPE_SYNC_START, getCurrentStripePeriod } from "@/lib/stripe/sync";
+import { META_SYNC_START, getCurrentMetaPeriod } from "@/lib/meta/sync";
 import { createClient } from "@/lib/supabase/server";
 import { StripeSyncCard } from "@/components/settings/stripe-sync-card";
+import { MetaAdsSyncCard } from "@/components/settings/meta-ads-sync-card";
 import { SoftwareExpensesCard } from "@/components/settings/software-expenses-card";
 import type { Metadata } from "next";
 import type { SoftwareExpenseItem } from "@/types";
@@ -20,7 +22,9 @@ function normalizeSoftwareExpense(row: SoftwareExpenseRow): SoftwareExpenseItem 
 
 export default async function SettingsPage() {
   const period = getCurrentStripePeriod();
+  const metaPeriod = getCurrentMetaPeriod();
   const syncAvailable = period.periodStart >= STRIPE_SYNC_START;
+  const metaSyncAvailable = metaPeriod.periodStart >= META_SYNC_START;
   const supabase = await createClient();
   const { data: expenses } = await supabase
     .from("software_expense_items")
@@ -44,6 +48,12 @@ export default async function SettingsPage() {
         syncAvailable={syncAvailable}
       />
 
+      <MetaAdsSyncCard
+        periodLabel={`${metaPeriod.periodStart} - ${metaPeriod.periodEnd}`}
+        syncStart={META_SYNC_START}
+        syncAvailable={metaSyncAvailable}
+      />
+
       <SoftwareExpensesCard
         items={((expenses as SoftwareExpenseRow[] | null) ?? []).map(
           normalizeSoftwareExpense
@@ -63,6 +73,11 @@ export default async function SettingsPage() {
           <span className="font-medium text-foreground">SUPABASE_SERVICE_ROLE_KEY</span>.
           The webhook URL is{" "}
           <span className="font-medium text-foreground">/api/stripe/webhook</span>.
+          Meta Ads sync also needs{" "}
+          <span className="font-medium text-foreground">META_ACCESS_TOKEN</span> and{" "}
+          <span className="font-medium text-foreground">META_AD_ACCOUNT_ID</span>.
+          Optional{" "}
+          <span className="font-medium text-foreground">META_AD_CURRENCY</span> defaults to TRY.
         </p>
       </section>
     </div>
