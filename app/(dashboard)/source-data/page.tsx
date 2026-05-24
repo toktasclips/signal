@@ -43,6 +43,9 @@ interface MetaCampaignRow {
   cpm: number | string;
   clicks: number | string;
   ctr: number | string;
+  result_type: string | null;
+  results: number | string;
+  cost_per_result: number | string;
 }
 
 function num(value: number | string | null | undefined): number {
@@ -72,6 +75,26 @@ function number(value: number | string): string {
 
 function period(row: { period_start: string; period_end: string }): string {
   return `${row.period_start} - ${row.period_end}`;
+}
+
+function resultLabel(value: string | null): string {
+  const labels: Record<string, string> = {
+    "offsite_conversion.fb_pixel_complete_registration": "Kayıt",
+    complete_registration: "Kayıt",
+    omni_complete_registration: "Kayıt",
+    "onsite_conversion.messaging_conversation_started_7d": "Mesajlaşma",
+    messaging_conversation_started_7d: "Mesajlaşma",
+    onsite_conversion_lead_grouped: "Lead",
+    "onsite_conversion.lead_grouped": "Lead",
+    lead: "Lead",
+    profile_visit: "Profil ziyareti",
+    landing_page_view: "Landing page view",
+    link_click: "Bağlantı tıklaması",
+    post_engagement: "Etkileşim",
+  };
+
+  if (!value) return "—";
+  return labels[value] ?? value.replaceAll("_", " ");
 }
 
 export default async function SourceDataPage() {
@@ -238,6 +261,8 @@ export default async function SourceDataPage() {
                     <Th align="right">Reach</Th>
                     <Th align="right">Impressions</Th>
                     <Th align="right">CPM</Th>
+                    <Th align="right">Sonuçlar</Th>
+                    <Th align="right">Sonuç Başına</Th>
                     <Th align="right">Clicks</Th>
                     <Th align="right">CTR</Th>
                   </tr>
@@ -260,6 +285,15 @@ export default async function SourceDataPage() {
                       <Td>{number(row.reach)}</Td>
                       <Td>{number(row.impressions)}</Td>
                       <Td>{tryMoney(row.cpm)}</Td>
+                      <Td>
+                        <div>
+                          <p>{number(row.results)}</p>
+                          <p className="mt-0.5 text-[11px] font-normal text-muted-foreground">
+                            {resultLabel(row.result_type)}
+                          </p>
+                        </div>
+                      </Td>
+                      <Td>{num(row.cost_per_result) > 0 ? tryMoney(row.cost_per_result) : "—"}</Td>
                       <Td>{number(row.clicks)}</Td>
                       <Td>{number(row.ctr)}%</Td>
                     </tr>

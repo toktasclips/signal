@@ -14,9 +14,17 @@ CREATE TABLE IF NOT EXISTS public.meta_ads_campaign_insights (
   cpm numeric NOT NULL DEFAULT 0,
   clicks integer NOT NULL DEFAULT 0,
   ctr numeric NOT NULL DEFAULT 0,
+  result_type text,
+  results numeric NOT NULL DEFAULT 0,
+  cost_per_result numeric NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (user_id, period_start, period_end, campaign_id)
 );
+
+ALTER TABLE public.meta_ads_campaign_insights
+  ADD COLUMN IF NOT EXISTS result_type text,
+  ADD COLUMN IF NOT EXISTS results numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS cost_per_result numeric NOT NULL DEFAULT 0;
 
 ALTER TABLE public.meta_ads_campaign_insights ENABLE ROW LEVEL SECURITY;
 

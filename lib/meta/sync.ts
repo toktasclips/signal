@@ -12,6 +12,13 @@ interface MetaInsightsRow {
   cpm?: string;
   clicks?: string;
   ctr?: string;
+  actions?: MetaActionMetric[];
+  cost_per_action_type?: MetaActionMetric[];
+}
+
+interface MetaActionMetric {
+  action_type?: string;
+  value?: string;
 }
 
 interface MetaInsightsResponse {
@@ -48,6 +55,9 @@ export interface MetaCampaignSummary {
   cpm: number;
   clicks: number;
   ctr: number;
+  resultType: string | null;
+  results: number;
+  costPerResult: number;
 }
 
 function addMonths(date: Date, months: number): Date {
@@ -93,6 +103,47 @@ function numberFromMeta(value: string | undefined): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+const RESULT_ACTION_PRIORITY = [
+  "offsite_conversion.fb_pixel_complete_registration",
+  "complete_registration",
+  "omni_complete_registration",
+  "onsite_conversion.messaging_conversation_started_7d",
+  "messaging_conversation_started_7d",
+  "onsite_conversion.lead_grouped",
+  "lead",
+  "profile_visit",
+  "landing_page_view",
+  "link_click",
+  "post_engagement",
+];
+
+function pickPrimaryResult(row: MetaInsightsRow): {
+  resultType: string | null;
+  results: number;
+  costPerResult: number;
+} {
+  const actions = row.actions ?? [];
+  const costs = row.cost_per_action_type ?? [];
+  const action =
+    RESULT_ACTION_PRIORITY.map((type) =>
+      actions.find((item) => item.action_type === type)
+    ).find(Boolean) ??
+    actions
+      .slice()
+      .sort((a, b) => numberFromMeta(b.value) - numberFromMeta(a.value))[0];
+
+  const resultType = action?.action_type ?? null;
+  const cost = resultType
+    ? costs.find((item) => item.action_type === resultType)
+    : undefined;
+
+  return {
+    resultType,
+    results: numberFromMeta(action?.value),
+    costPerResult: numberFromMeta(cost?.value),
+  };
+}
+
 function adAccountPath(adAccountId: string): string {
   return adAccountId.startsWith("act_") ? adAccountId : `act_${adAccountId}`;
 }
@@ -133,7 +184,8 @@ async function fetchMetaCampaignInsights(
   const params = new URLSearchParams({
     access_token: accessToken,
     level: "campaign",
-    fields: "campaign_id,campaign_name,spend,reach,impressions,cpm,clicks,ctr",
+    fields:
+      "campaign_id,campaign_name,spend,reach,impressions,cpm,clicks,ctr,actions,cost_per_action_type",
     time_range: JSON.stringify({ since: periodStart, until }),
     limit: "500",
   });
@@ -186,16 +238,23 @@ function summarizeInsights(
 }
 
 function summarizeCampaigns(rows: MetaInsightsRow[]): MetaCampaignSummary[] {
-  return rows.map((row) => ({
-    campaignId: row.campaign_id ?? "unknown",
-    campaignName: row.campaign_name ?? "Unknown campaign",
-    spend: numberFromMeta(row.spend),
-    reach: numberFromMeta(row.reach),
-    impressions: numberFromMeta(row.impressions),
-    cpm: numberFromMeta(row.cpm),
-    clicks: numberFromMeta(row.clicks),
-    ctr: numberFromMeta(row.ctr),
-  }));
+  return rows.map((row) => {
+    const result = pickPrimaryResult(row);
+
+    return {
+      campaignId: row.campaign_id ?? "unknown",
+      campaignName: row.campaign_name ?? "Unknown campaign",
+      spend: numberFromMeta(row.spend),
+      reach: numberFromMeta(row.reach),
+      impressions: numberFromMeta(row.impressions),
+      cpm: numberFromMeta(row.cpm),
+      clicks: numberFromMeta(row.clicks),
+      ctr: numberFromMeta(row.ctr),
+      resultType: result.resultType,
+      results: result.results,
+      costPerResult: result.costPerResult,
+    };
+  });
 }
 
 export async function syncMetaAdsCurrentPeriod(
@@ -254,6 +313,9 @@ export async function syncMetaAdsCurrentPeriod(
           cpm: campaign.cpm,
           clicks: campaign.clicks,
           ctr: campaign.ctr,
+          result_type: campaign.resultType,
+          results: campaign.results,
+          cost_per_result: campaign.costPerResult,
         }))
       );
     if (campaignError) throw new Error(campaignError.message);
