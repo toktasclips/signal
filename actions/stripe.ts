@@ -26,9 +26,7 @@ export async function syncCurrentStripePeriod(
   try {
     const summary = await syncStripeCurrentPeriod(user.id);
     revalidatePath("/settings");
-    revalidatePath("/trend-dashboard");
-    revalidatePath("/trends");
-    revalidatePath("/quarter-review");
+    revalidatePath("/source-data");
     revalidatePath("/kpi-entry");
 
     return {

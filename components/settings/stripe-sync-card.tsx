@@ -53,8 +53,8 @@ export function StripeSyncCard({
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
               Stripe verileri {syncStart} başlangıçlı dönemden itibaren çekilir.
               Aktif dönem: {periodLabel}. Önceki manuel/import edilmiş KPI
-              kayıtları değiştirilmez; sync sadece Stripe kaynaklı USD alanlarını
-              günceller.
+              kayıtları değiştirilmez; sync kayıtları yalnızca Kaynak Verileri
+              sayfasında saklanır.
             </p>
           </div>
         </div>

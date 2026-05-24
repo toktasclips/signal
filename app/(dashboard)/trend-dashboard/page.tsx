@@ -231,10 +231,6 @@ const metricLogGroups: Array<{
       { label: "Yeni Deal Value", key: "new_deal_value", format: "currency" },
       { label: "Toplam Gelir", key: "cash_collected", format: "currency" },
       { label: "Kâr", key: "profit", format: "currency" },
-      { label: "Stripe Brüt Gelir", key: "stripe_gross_revenue", format: "usd" },
-      { label: "Stripe Net Gelir", key: "stripe_net_revenue", format: "usd" },
-      { label: "Stripe Fee", key: "stripe_fees", format: "usd" },
-      { label: "Stripe Refund", key: "stripe_refunds", format: "usd" },
       { label: "Yazılım Harcamaları", key: "software_expenses", format: "currency" },
       { label: "Diğer Harcamalar", key: "other_expenses", format: "currency" },
     ],
@@ -244,12 +240,6 @@ const metricLogGroups: Array<{
     items: [
       { label: "Reklam Harcaması", key: "ad_spend", format: "currency" },
       { label: "CPM", key: "cpm", format: "currency" },
-      { label: "Meta Spend", key: "meta_ad_spend", format: "currency" },
-      { label: "Meta Reach", key: "meta_reach", format: "number" },
-      { label: "Meta Impressions", key: "meta_impressions", format: "number" },
-      { label: "Meta CPM", key: "meta_cpm", format: "currency" },
-      { label: "Meta Clicks", key: "meta_clicks", format: "number" },
-      { label: "Meta CTR", key: "meta_ctr", format: "percent" },
       { label: "ROAS", key: "roas", format: "ratio" },
       { label: "Instagram Reach", key: "instagram_reach", format: "number" },
       { label: "Instagram Gösterim", key: "instagram_impressions", format: "number" },
@@ -283,26 +273,6 @@ function MetricLogPanel({ metric }: { metric: MonthlyMetric }) {
         title="Aylık Veri Logu"
         description={`${TURKISH_MONTHS[metric.month - 1]} ${metric.year} için girilen ham kayıtlar ve eksik alanlar.`}
       />
-      {metric.stripe_synced_at && (
-        <div className="rounded-xl border border-emerald-200/80 bg-emerald-50 px-4 py-3">
-          <p className="text-sm font-medium text-emerald-700">
-            Stripe sync aktif: {metric.stripe_period_start} - {metric.stripe_period_end}
-          </p>
-          <p className="mt-0.5 text-xs text-emerald-700/80">
-            Son senkronizasyon: {new Date(metric.stripe_synced_at).toLocaleString("tr-TR")}
-          </p>
-        </div>
-      )}
-      {metric.meta_synced_at && (
-        <div className="rounded-xl border border-blue-200/80 bg-blue-50 px-4 py-3">
-          <p className="text-sm font-medium text-blue-700">
-            Meta Ads sync aktif: {metric.meta_period_start} - {metric.meta_period_end}
-          </p>
-          <p className="mt-0.5 text-xs text-blue-700/80">
-            Son senkronizasyon: {new Date(metric.meta_synced_at).toLocaleString("tr-TR")}
-          </p>
-        </div>
-      )}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {metricLogGroups.map((group) => (
           <div key={group.title} className="rounded-xl border border-border bg-card p-5 shadow-card">

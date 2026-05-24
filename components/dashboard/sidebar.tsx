@@ -15,6 +15,7 @@ import {
   PlusCircle,
   Trophy,
   CalendarPlus,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ const analyticsNavItems = [
   { label: "Dashboard", href: "/trend-dashboard", icon: BarChart2 },
   { label: "KPI Girişi", href: "/kpi-entry", icon: PlusCircle },
   { label: "Trend Analizi", href: "/trends", icon: TrendingUp },
+  { label: "Kaynak Verileri", href: "/source-data", icon: Database },
   { label: "Quarter Review", href: "/quarter-review", icon: Trophy },
 ];
 

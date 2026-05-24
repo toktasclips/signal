@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export const META_SYNC_START = "2026-05-25";
 const GRAPH_API_VERSION = process.env.META_GRAPH_API_VERSION ?? "v20.0";
 
 interface MetaInsightsRow {
+  campaign_id?: string;
+  campaign_name?: string;
   spend?: string;
   reach?: string;
   impressions?: string;
@@ -15,6 +16,9 @@ interface MetaInsightsRow {
 
 interface MetaInsightsResponse {
   data?: MetaInsightsRow[];
+  paging?: {
+    next?: string;
+  };
   error?: {
     message?: string;
   };
@@ -26,6 +30,18 @@ export interface MetaAdsSummary {
   month: number;
   year: number;
   currency: string;
+  spend: number;
+  reach: number;
+  impressions: number;
+  cpm: number;
+  clicks: number;
+  ctr: number;
+  campaigns: MetaCampaignSummary[];
+}
+
+export interface MetaCampaignSummary {
+  campaignId: string;
+  campaignName: string;
   spend: number;
   reach: number;
   impressions: number;
@@ -71,10 +87,6 @@ export function getCurrentMetaPeriod(now = new Date()): {
   };
 }
 
-function isBeforeSyncStart(periodStart: string): boolean {
-  return periodStart < META_SYNC_START;
-}
-
 function numberFromMeta(value: string | undefined): number {
   if (!value) return 0;
   const parsed = Number(value);
@@ -111,6 +123,40 @@ async function fetchMetaInsights(
   return payload.data ?? [];
 }
 
+async function fetchMetaCampaignInsights(
+  accessToken: string,
+  adAccountId: string,
+  periodStart: string,
+  periodEnd: string
+): Promise<MetaInsightsRow[]> {
+  const until = ymd(addDays(new Date(`${periodEnd}T00:00:00.000Z`), -1));
+  const params = new URLSearchParams({
+    access_token: accessToken,
+    level: "campaign",
+    fields: "campaign_id,campaign_name,spend,reach,impressions,cpm,clicks,ctr",
+    time_range: JSON.stringify({ since: periodStart, until }),
+    limit: "500",
+  });
+
+  const rows: MetaInsightsRow[] = [];
+  let nextUrl: string | null =
+    `https://graph.facebook.com/${GRAPH_API_VERSION}/${adAccountPath(adAccountId)}/insights?${params.toString()}`;
+
+  while (nextUrl) {
+    const response = await fetch(nextUrl);
+    const payload = (await response.json()) as MetaInsightsResponse;
+
+    if (!response.ok || payload.error) {
+      throw new Error(payload.error?.message ?? "Meta campaign request failed.");
+    }
+
+    rows.push(...(payload.data ?? []));
+    nextUrl = payload.paging?.next ?? null;
+  }
+
+  return rows;
+}
+
 function summarizeInsights(
   rows: MetaInsightsRow[],
   period: ReturnType<typeof getCurrentMetaPeriod>
@@ -134,8 +180,22 @@ function summarizeInsights(
       cpm: 0,
       clicks: 0,
       ctr: 0,
+      campaigns: [],
     }
   );
+}
+
+function summarizeCampaigns(rows: MetaInsightsRow[]): MetaCampaignSummary[] {
+  return rows.map((row) => ({
+    campaignId: row.campaign_id ?? "unknown",
+    campaignName: row.campaign_name ?? "Unknown campaign",
+    spend: numberFromMeta(row.spend),
+    reach: numberFromMeta(row.reach),
+    impressions: numberFromMeta(row.impressions),
+    cpm: numberFromMeta(row.cpm),
+    clicks: numberFromMeta(row.clicks),
+    ctr: numberFromMeta(row.ctr),
+  }));
 }
 
 export async function syncMetaAdsCurrentPeriod(
@@ -149,67 +209,13 @@ export async function syncMetaAdsCurrentPeriod(
   if (!adAccountId) throw new Error("META_AD_ACCOUNT_ID is not configured.");
 
   const period = getCurrentMetaPeriod();
-  if (isBeforeSyncStart(period.periodStart)) {
-    throw new Error("Meta Ads sync Mayıs sonrası başlar. İlk dönem 2026-05-25 - 2026-06-25.");
-  }
-
-  const rows = await fetchMetaInsights(
-    accessToken,
-    adAccountId,
-    period.periodStart,
-    period.periodEnd
-  );
+  const [rows, campaignRows] = await Promise.all([
+    fetchMetaInsights(accessToken, adAccountId, period.periodStart, period.periodEnd),
+    fetchMetaCampaignInsights(accessToken, adAccountId, period.periodStart, period.periodEnd),
+  ]);
   const summary = summarizeInsights(rows, period);
+  summary.campaigns = summarizeCampaigns(campaignRows);
   const supabase = supabaseOverride ?? (await createClient());
-
-  const { data: existingMetric, error: lookupError } = await supabase
-    .from("monthly_metrics")
-    .select("id, ad_spend, instagram_reach, instagram_impressions, cpm")
-    .eq("user_id", userId)
-    .eq("month", summary.month)
-    .eq("year", summary.year)
-    .maybeSingle();
-
-  if (lookupError) throw new Error(lookupError.message);
-
-  const metaPayload = {
-    user_id: userId,
-    month: summary.month,
-    year: summary.year,
-    meta_ad_spend: summary.spend,
-    meta_reach: summary.reach,
-    meta_impressions: summary.impressions,
-    meta_cpm: summary.cpm,
-    meta_clicks: summary.clicks,
-    meta_ctr: summary.ctr,
-    meta_period_start: summary.periodStart,
-    meta_period_end: summary.periodEnd,
-    meta_synced_at: new Date().toISOString(),
-  };
-
-  const { error } = existingMetric?.id
-    ? await supabase
-        .from("monthly_metrics")
-        .update({
-          ...metaPayload,
-          ...(existingMetric.ad_spend === null ? { ad_spend: summary.spend } : {}),
-          ...(existingMetric.instagram_reach === null ? { instagram_reach: summary.reach } : {}),
-          ...(existingMetric.instagram_impressions === null
-            ? { instagram_impressions: summary.impressions }
-            : {}),
-          ...(existingMetric.cpm === null ? { cpm: summary.cpm } : {}),
-        })
-        .eq("id", existingMetric.id)
-        .eq("user_id", userId)
-    : await supabase.from("monthly_metrics").insert({
-        ...metaPayload,
-        ad_spend: summary.spend,
-        instagram_reach: summary.reach,
-        instagram_impressions: summary.impressions,
-        cpm: summary.cpm,
-      });
-
-  if (error) throw new Error(error.message);
 
   const { error: runError } = await supabase.from("meta_ads_sync_runs").insert({
     user_id: userId,
@@ -223,6 +229,35 @@ export async function syncMetaAdsCurrentPeriod(
     ctr: summary.ctr,
   });
   if (runError) throw new Error(runError.message);
+
+  const { error: deleteError } = await supabase
+    .from("meta_ads_campaign_insights")
+    .delete()
+    .eq("user_id", userId)
+    .eq("period_start", summary.periodStart)
+    .eq("period_end", summary.periodEnd);
+  if (deleteError) throw new Error(deleteError.message);
+
+  if (summary.campaigns.length > 0) {
+    const { error: campaignError } = await supabase
+      .from("meta_ads_campaign_insights")
+      .insert(
+        summary.campaigns.map((campaign) => ({
+          user_id: userId,
+          period_start: summary.periodStart,
+          period_end: summary.periodEnd,
+          campaign_id: campaign.campaignId,
+          campaign_name: campaign.campaignName,
+          spend: campaign.spend,
+          reach: campaign.reach,
+          impressions: campaign.impressions,
+          cpm: campaign.cpm,
+          clicks: campaign.clicks,
+          ctr: campaign.ctr,
+        }))
+      );
+    if (campaignError) throw new Error(campaignError.message);
+  }
 
   return summary;
 }

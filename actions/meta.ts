@@ -14,6 +14,7 @@ interface MetaAdsSyncResult {
   clicks: number;
   ctr: number;
   currency: string;
+  campaignCount: number;
 }
 
 export async function syncCurrentMetaAdsPeriod(
@@ -28,10 +29,7 @@ export async function syncCurrentMetaAdsPeriod(
   try {
     const summary = await syncMetaAdsCurrentPeriod(user.id);
     revalidatePath("/settings");
-    revalidatePath("/trend-dashboard");
-    revalidatePath("/trends");
-    revalidatePath("/quarter-review");
-    revalidatePath("/kpi-entry");
+    revalidatePath("/source-data");
 
     return {
       status: "success",
@@ -45,6 +43,7 @@ export async function syncCurrentMetaAdsPeriod(
         clicks: summary.clicks,
         ctr: summary.ctr,
         currency: summary.currency,
+        campaignCount: summary.campaigns.length,
       },
     };
   } catch (error) {

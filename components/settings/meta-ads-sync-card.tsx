@@ -15,6 +15,7 @@ interface MetaAdsSyncResult {
   clicks: number;
   ctr: number;
   currency: string;
+  campaignCount: number;
 }
 
 const initialState: ActionState<MetaAdsSyncResult> = { status: "idle" };
@@ -33,12 +34,8 @@ function money(value: number, currency: string): string {
 
 export function MetaAdsSyncCard({
   periodLabel,
-  syncStart,
-  syncAvailable,
 }: {
   periodLabel: string;
-  syncStart: string;
-  syncAvailable: boolean;
 }) {
   const [state, formAction, isPending] = useActionState(
     syncCurrentMetaAdsPeriod,
@@ -57,33 +54,20 @@ export function MetaAdsSyncCard({
               Meta Ads Sync
             </h2>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Facebook/Instagram reklam verileri {syncStart} başlangıçlı
-              dönemden itibaren çekilir. Aktif dönem: {periodLabel}. Manuel KPI
-              alanları doluysa değiştirilmez; Meta kaynaklı reklam alanları
-              ayrıca saklanır.
+              Facebook/Instagram reklam verileri aktif dönem için çekilir:
+              {" "}{periodLabel}. Kampanya bazlı spend, reach, impression,
+              click, CPM ve CTR kayıtları ayrı kaynak veri sayfasına düşer.
             </p>
           </div>
         </div>
 
         <form action={formAction}>
-          <Button type="submit" disabled={isPending || !syncAvailable}>
+          <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
-            {isPending
-              ? "Senkronize ediliyor..."
-              : syncAvailable
-                ? "Meta Verilerini Sync Et"
-                : "Mayıs Sonrası Açılır"}
+            {isPending ? "Senkronize ediliyor..." : "Meta Verilerini Sync Et"}
           </Button>
         </form>
       </div>
-
-      {!syncAvailable && (
-        <div className="mt-4 rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-medium text-amber-800">
-            Meta Ads sync Mayıs dönemine uygulanmaz. İlk aktif dönem 2026-05-25 - 2026-06-25 olacak.
-          </p>
-        </div>
-      )}
 
       {state.status === "error" && (
         <div className="mt-4 rounded-lg border border-red-200/80 bg-red-50 px-4 py-3">
@@ -100,6 +84,7 @@ export function MetaAdsSyncCard({
           <SyncStat label="CPM" value={money(state.data.cpm, state.data.currency)} />
           <SyncStat label="Clicks" value={number(state.data.clicks)} />
           <SyncStat label="CTR" value={`${number(state.data.ctr)}%`} />
+          <SyncStat label="Campaigns" value={number(state.data.campaignCount)} />
         </div>
       )}
     </section>

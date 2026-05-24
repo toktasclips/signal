@@ -168,44 +168,6 @@ export async function syncStripeCurrentPeriod(
   const summary = summarizeTransactions(transactions, period);
 
   const supabase = supabaseOverride ?? (await createClient());
-  const basePayload = {
-    user_id: userId,
-    month: summary.month,
-    year: summary.year,
-    stripe_gross_revenue: summary.grossRevenue,
-    stripe_net_revenue: summary.netRevenue,
-    stripe_fees: summary.fees,
-    stripe_refunds: summary.refunds,
-    stripe_charge_count: summary.chargeCount,
-    stripe_period_start: summary.periodStart,
-    stripe_period_end: summary.periodEnd,
-    stripe_synced_at: new Date().toISOString(),
-  };
-
-  const { data: existingMetric, error: lookupError } = await supabase
-    .from("monthly_metrics")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("month", summary.month)
-    .eq("year", summary.year)
-    .maybeSingle();
-
-  if (lookupError) throw new Error(lookupError.message);
-
-  const { error } = existingMetric?.id
-    ? await supabase
-        .from("monthly_metrics")
-        .update(basePayload)
-        .eq("id", existingMetric.id)
-        .eq("user_id", userId)
-    : await supabase.from("monthly_metrics").insert({
-        ...basePayload,
-        cash_collected: summary.grossRevenue,
-        profit: summary.netRevenue,
-      });
-
-  if (error) throw new Error(error.message);
-
   const { error: runError } = await supabase.from("stripe_sync_runs").insert({
     user_id: userId,
     period_start: summary.periodStart,

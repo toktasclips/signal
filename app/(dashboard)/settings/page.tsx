@@ -1,5 +1,5 @@
 import { STRIPE_SYNC_START, getCurrentStripePeriod } from "@/lib/stripe/sync";
-import { META_SYNC_START, getCurrentMetaPeriod } from "@/lib/meta/sync";
+import { getCurrentMetaPeriod } from "@/lib/meta/sync";
 import { createClient } from "@/lib/supabase/server";
 import { StripeSyncCard } from "@/components/settings/stripe-sync-card";
 import { MetaAdsSyncCard } from "@/components/settings/meta-ads-sync-card";
@@ -24,7 +24,6 @@ export default async function SettingsPage() {
   const period = getCurrentStripePeriod();
   const metaPeriod = getCurrentMetaPeriod();
   const syncAvailable = period.periodStart >= STRIPE_SYNC_START;
-  const metaSyncAvailable = metaPeriod.periodStart >= META_SYNC_START;
   const supabase = await createClient();
   const { data: expenses } = await supabase
     .from("software_expense_items")
@@ -50,8 +49,6 @@ export default async function SettingsPage() {
 
       <MetaAdsSyncCard
         periodLabel={`${metaPeriod.periodStart} - ${metaPeriod.periodEnd}`}
-        syncStart={META_SYNC_START}
-        syncAvailable={metaSyncAvailable}
       />
 
       <SoftwareExpensesCard
@@ -59,27 +56,6 @@ export default async function SettingsPage() {
           normalizeSoftwareExpense
         )}
       />
-
-      <section className="rounded-xl border border-border bg-card p-5 shadow-card">
-        <h2 className="text-sm font-semibold text-foreground">
-          Stripe Environment
-        </h2>
-        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Vercel environment variables must include{" "}
-          <span className="font-medium text-foreground">STRIPE_SECRET_KEY</span>.
-          Webhook automation also needs{" "}
-          <span className="font-medium text-foreground">STRIPE_WEBHOOK_SECRET</span>,{" "}
-          <span className="font-medium text-foreground">STRIPE_SYNC_USER_EMAIL</span>, and{" "}
-          <span className="font-medium text-foreground">SUPABASE_SERVICE_ROLE_KEY</span>.
-          The webhook URL is{" "}
-          <span className="font-medium text-foreground">/api/stripe/webhook</span>.
-          Meta Ads sync also needs{" "}
-          <span className="font-medium text-foreground">META_ACCESS_TOKEN</span> and{" "}
-          <span className="font-medium text-foreground">META_AD_ACCOUNT_ID</span>.
-          Optional{" "}
-          <span className="font-medium text-foreground">META_AD_CURRENCY</span> defaults to TRY.
-        </p>
-      </section>
     </div>
   );
 }
