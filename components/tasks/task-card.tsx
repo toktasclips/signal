@@ -1,12 +1,12 @@
 "use client";
 
 import { useTransition } from "react";
-import { CheckCircle2, Circle, Pencil, Trash2, RotateCcw, Link2 } from "lucide-react";
+import { CheckCircle2, Circle, Pencil, Trash2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PRIORITY_CLASSES, PRIORITY_LABELS } from "@/lib/lead-utils";
 import { completeTask, deleteTask, reopenTask } from "@/actions/task";
-import type { Task, Lead } from "@/types";
+import type { Task } from "@/types";
 
 const STATUS_CLASSES: Record<string, string> = {
   todo: "bg-muted text-muted-foreground border-transparent",
@@ -22,11 +22,10 @@ const STATUS_LABELS: Record<string, string> = {
 
 interface TaskCardProps {
   task: Task;
-  lead?: Lead | null;
   onEdit: (task: Task) => void;
 }
 
-export function TaskCard({ task, lead, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onEdit }: TaskCardProps) {
   const [isPending, startTransition] = useTransition();
 
   const isCompleted = task.status === "completed";
@@ -159,12 +158,6 @@ export function TaskCard({ task, lead, onEdit }: TaskCardProps) {
               )}
             >
               {isOverdue ? "Overdue · " : ""}{formattedDate}
-            </span>
-          )}
-          {lead && (
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Link2 className="h-3 w-3" />
-              {lead.name}
             </span>
           )}
         </div>

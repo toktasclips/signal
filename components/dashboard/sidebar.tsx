@@ -9,7 +9,6 @@ import {
   CheckSquare,
   Settings,
   Building2,
-  BrainCircuit,
   Sparkles,
   BarChart2,
   TrendingUp,
@@ -39,11 +38,6 @@ const navItems = [
     label: "Tasks",
     href: "/tasks",
     icon: CheckSquare,
-  },
-  {
-    label: "Intelligence",
-    href: "/intelligence",
-    icon: BrainCircuit,
   },
   {
     label: "Signals",

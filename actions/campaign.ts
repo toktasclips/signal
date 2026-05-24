@@ -20,7 +20,7 @@ function revalidateAll() {
   revalidatePath("/campaigns");
   revalidatePath("/campaign-calendar");
   revalidatePath("/leads");
-  revalidatePath("/activity");
+  revalidatePath("/signals");
 }
 
 export async function createCampaign(

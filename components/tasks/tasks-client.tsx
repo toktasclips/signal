@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { Plus, CheckSquare, Clock, AlertCircle, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TaskCard } from "./task-card";
 import { TaskModal } from "./task-modal";
-import type { Lead, Task } from "@/types";
+import type { Task } from "@/types";
 
 interface MetricCardProps {
   label: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   accent?: string;
 }
 
@@ -31,12 +31,11 @@ function MetricCard({ label, value, icon, accent }: MetricCardProps) {
 interface SectionProps {
   title: string;
   tasks: Task[];
-  leadsMap: Map<string, Lead>;
   onEdit: (task: Task) => void;
   accent?: string;
 }
 
-function TaskSection({ title, tasks, leadsMap, onEdit, accent }: SectionProps) {
+function TaskSection({ title, tasks, onEdit, accent }: SectionProps) {
   if (tasks.length === 0) return null;
   return (
     <section className="space-y-2">
@@ -50,7 +49,6 @@ function TaskSection({ title, tasks, leadsMap, onEdit, accent }: SectionProps) {
           <TaskCard
             key={task.id}
             task={task}
-            lead={task.lead_id ? leadsMap.get(task.lead_id) : null}
             onEdit={onEdit}
           />
         ))}
@@ -61,17 +59,11 @@ function TaskSection({ title, tasks, leadsMap, onEdit, accent }: SectionProps) {
 
 interface TasksClientProps {
   tasks: Task[];
-  leads: Lead[];
 }
 
-export function TasksClient({ tasks, leads }: TasksClientProps) {
+export function TasksClient({ tasks }: TasksClientProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
-
-  const leadsMap = useMemo(
-    () => new Map(leads.map((l) => [l.id, l])),
-    [leads]
-  );
 
   const today = new Date(new Date().toDateString());
 
@@ -209,28 +201,24 @@ export function TasksClient({ tasks, leads }: TasksClientProps) {
           <TaskSection
             title="Overdue"
             tasks={overdue}
-            leadsMap={leadsMap}
             onEdit={handleEdit}
             accent="bg-red-400"
           />
           <TaskSection
             title="Due Today"
             tasks={dueToday}
-            leadsMap={leadsMap}
             onEdit={handleEdit}
             accent="bg-blue-400"
           />
           <TaskSection
             title="Upcoming"
             tasks={upcoming}
-            leadsMap={leadsMap}
             onEdit={handleEdit}
             accent="bg-primary/60"
           />
           <TaskSection
             title="Completed"
             tasks={completed.slice(0, 20)}
-            leadsMap={leadsMap}
             onEdit={handleEdit}
           />
         </div>
@@ -240,7 +228,6 @@ export function TasksClient({ tasks, leads }: TasksClientProps) {
         open={modalOpen}
         onOpenChange={handleModalClose}
         task={editTask}
-        leads={leads}
       />
     </>
   );

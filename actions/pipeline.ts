@@ -30,7 +30,7 @@ async function getAuthUser() {
 function revalidatePipeline() {
   revalidatePath("/pipeline");
   revalidatePath("/leads");
-  revalidatePath("/activity");
+  revalidatePath("/signals");
 }
 
 export async function updateLeadStatus(

@@ -16,7 +16,7 @@ async function getAuthUser() {
 function revalidateAll() {
   revalidatePath("/tasks");
   revalidatePath("/leads");
-  revalidatePath("/activity");
+  revalidatePath("/signals");
 }
 
 export async function createTask(
@@ -38,6 +38,7 @@ export async function createTask(
 
   const { data, error } = await supabase.from("tasks").insert({
     ...parsed.data,
+    lead_id: null,
     user_id: user.id,
   }).select("id").single();
 
@@ -48,14 +49,13 @@ export async function createTask(
     type: "task_created",
     title: `Task created: ${parsed.data.title}`,
     taskId: data?.id,
-    leadId: parsed.data.lead_id ?? null,
     metadata: { priority: parsed.data.priority, due_date: parsed.data.due_date },
   });
 
   if (data?.id && parsed.data.description) {
     analyzeAndSaveTags({
       userId: user.id,
-      leadId: parsed.data.lead_id ?? null,
+      leadId: null,
       sourceType: "task_description",
       sourceId: data.id,
       text: parsed.data.description,
@@ -86,7 +86,7 @@ export async function updateTask(
 
   const { error } = await supabase
     .from("tasks")
-    .update(parsed.data)
+    .update({ ...parsed.data, lead_id: null })
     .eq("id", id)
     .eq("user_id", user.id);
 
@@ -134,7 +134,7 @@ export async function completeTask(id: string): Promise<ActionState> {
     type: "task_completed",
     title: `Task completed: ${task?.title ?? "Task"}`,
     taskId: id,
-    leadId: task?.lead_id ?? null,
+    leadId: null,
   });
 
   revalidateAll();

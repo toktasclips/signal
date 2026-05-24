@@ -7,12 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import type { ActionState, Lead, Task } from "@/types";
+import type { ActionState, Task } from "@/types";
 
 interface TaskFormProps {
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
   defaultValues?: Partial<Task>;
-  leads?: Lead[];
   onSuccess: () => void;
 }
 
@@ -21,7 +20,6 @@ const initialState: ActionState = { status: "idle" };
 export function TaskForm({
   action,
   defaultValues,
-  leads = [],
   onSuccess,
 }: TaskFormProps) {
   const [state, formAction, isPending] = useActionState(
@@ -58,7 +56,7 @@ export function TaskForm({
         <Input
           id="title"
           name="title"
-          placeholder="Follow up with client"
+          placeholder="Prepare launch checklist"
           defaultValue={defaultValues?.title ?? ""}
           disabled={isPending}
           autoFocus
@@ -124,26 +122,7 @@ export function TaskForm({
         />
       </div>
 
-      {/* Linked Lead */}
-      {leads.length > 0 && (
-        <div className="space-y-1.5">
-          <Label htmlFor="lead_id">Link to Lead</Label>
-          <Select
-            id="lead_id"
-            name="lead_id"
-            defaultValue={defaultValues?.lead_id ?? ""}
-            disabled={isPending}
-          >
-            <option value="">No lead</option>
-            {leads.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-                {l.company ? ` · ${l.company}` : ""}
-              </option>
-            ))}
-          </Select>
-        </div>
-      )}
+      <input type="hidden" name="lead_id" value="" />
 
       <div className="pt-2">
         <Button type="submit" className="w-full" disabled={isPending}>
