@@ -1,6 +1,7 @@
 import { getMonthlyMetrics } from "@/lib/analytics/data"
 import { TURKISH_MONTHS } from "@/lib/analytics/mock-data"
 import { createClient } from "@/lib/supabase/server"
+import { QuarterIntelligenceAssistant } from "@/components/analytics/quarter-intelligence-assistant"
 import type { MonthlyMetric } from "@/lib/analytics/types"
 import type { Metadata } from "next"
 import Link from "next/link"
@@ -322,6 +323,11 @@ export default async function QuarterReviewPage({
             </div>
           ))}
         </div>
+
+        <QuarterIntelligenceAssistant
+          periodLabel={`Q${activeGroup.quarter} ${activeGroup.year} (${formatMonths(activeGroup.metrics)})`}
+          metrics={activeGroup.metrics}
+        />
       </div>
     </div>
   )
