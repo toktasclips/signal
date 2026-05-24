@@ -1,4 +1,4 @@
-import { getCurrentStripePeriod } from "@/lib/stripe/sync";
+import { STRIPE_SYNC_START, getCurrentStripePeriod } from "@/lib/stripe/sync";
 import { createClient } from "@/lib/supabase/server";
 import { StripeSyncCard } from "@/components/settings/stripe-sync-card";
 import { SoftwareExpensesCard } from "@/components/settings/software-expenses-card";
@@ -20,6 +20,7 @@ function normalizeSoftwareExpense(row: SoftwareExpenseRow): SoftwareExpenseItem 
 
 export default async function SettingsPage() {
   const period = getCurrentStripePeriod();
+  const syncAvailable = period.periodStart >= STRIPE_SYNC_START;
   const supabase = await createClient();
   const { data: expenses } = await supabase
     .from("software_expense_items")
@@ -37,7 +38,11 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <StripeSyncCard periodLabel={`${period.periodStart} - ${period.periodEnd}`} />
+      <StripeSyncCard
+        periodLabel={`${period.periodStart} - ${period.periodEnd}`}
+        syncStart={STRIPE_SYNC_START}
+        syncAvailable={syncAvailable}
+      />
 
       <SoftwareExpensesCard
         items={((expenses as SoftwareExpenseRow[] | null) ?? []).map(

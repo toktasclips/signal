@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const STRIPE_SYNC_START = "2026-04-25";
+export const STRIPE_SYNC_START = "2026-05-25";
 
 interface StripeBalanceTransaction {
   id: string;
@@ -157,7 +157,7 @@ export async function syncStripeCurrentPeriod(
 
   const period = getCurrentStripePeriod();
   if (isBeforeSyncStart(period.periodStart)) {
-    throw new Error("Stripe sync is configured to start from 2026-04-25.");
+    throw new Error("Stripe sync Mayıs sonrası başlar. İlk Stripe dönemi 2026-05-25 - 2026-06-25.");
   }
 
   const transactions = await listStripeBalanceTransactions(

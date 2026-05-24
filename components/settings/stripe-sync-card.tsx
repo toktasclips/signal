@@ -25,7 +25,15 @@ function usd(value: number): string {
   });
 }
 
-export function StripeSyncCard({ periodLabel }: { periodLabel: string }) {
+export function StripeSyncCard({
+  periodLabel,
+  syncStart,
+  syncAvailable,
+}: {
+  periodLabel: string;
+  syncStart: string;
+  syncAvailable: boolean;
+}) {
   const [state, formAction, isPending] = useActionState(
     syncCurrentStripePeriod,
     initialState
@@ -43,21 +51,33 @@ export function StripeSyncCard({ periodLabel }: { periodLabel: string }) {
               Stripe Revenue Sync
             </h2>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Stripe verileri sadece {periodLabel} döneminden itibaren çekilir.
-              Önceki manuel/import edilmiş KPI kayıtları değiştirilmez. Sync
-              sonucu bu dönemin Toplam Gelir ve net gelir alanlarını Stripe
-              kaynaklı USD tutarlarla günceller.
+              Stripe verileri {syncStart} başlangıçlı dönemden itibaren çekilir.
+              Aktif dönem: {periodLabel}. Önceki manuel/import edilmiş KPI
+              kayıtları değiştirilmez; sync sadece Stripe kaynaklı USD alanlarını
+              günceller.
             </p>
           </div>
         </div>
 
         <form action={formAction}>
-          <Button type="submit" disabled={isPending}>
+          <Button type="submit" disabled={isPending || !syncAvailable}>
             {isPending && <Loader2 className="animate-spin" />}
-            {isPending ? "Senkronize ediliyor..." : "Bu Dönemi Sync Et"}
+            {isPending
+              ? "Senkronize ediliyor..."
+              : syncAvailable
+                ? "Bu Dönemi Sync Et"
+                : "Mayıs Sonrası Açılır"}
           </Button>
         </form>
       </div>
+
+      {!syncAvailable && (
+        <div className="mt-4 rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-800">
+            Stripe sync Mayıs dönemine uygulanmaz. İlk aktif dönem 2026-05-25 - 2026-06-25 olacak.
+          </p>
+        </div>
+      )}
 
       {state.status === "error" && (
         <div className="mt-4 rounded-lg border border-red-200/80 bg-red-50 px-4 py-3">
