@@ -294,22 +294,6 @@ export default async function TrendsPage({ searchParams }: TrendsPageProps) {
               ))}
             </div>
           </div>
-
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {sorted.map((metric) => (
-              <Link
-                key={periodKey(metric)}
-                href={buildHref(periodKey(metric), range)}
-                className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
-                  periodKey(metric) === selectedPeriod
-                    ? "border-primary/20 bg-primary/8 text-foreground"
-                    : "border-border bg-card text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {periodLabel(metric)}
-              </Link>
-            ))}
-          </div>
         </section>
 
         <section className="space-y-3">
