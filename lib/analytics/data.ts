@@ -5,8 +5,40 @@ import type { MonthlyMetric, QuarterReview } from "./types";
 type MetricRow = MonthlyMetric & { user_id?: string };
 type QuarterRow = QuarterReview & { user_id?: string };
 
+const MAY_2026_MANUAL_METRIC = {
+  total_goal: 726000,
+  new_deal_value: 548000,
+  monthly_recurring_revenue: 548000,
+  cash_collected: 726000,
+  ad_spend: 29000,
+  instagram_reach: 300000,
+  instagram_impressions: 486000,
+  cpm: 59.67,
+  roas: 18.9,
+  new_customers: 3,
+  instagram_followers: 33500,
+  engagement: null,
+  shares: null,
+  youtube_subscribers: 4000,
+  youtube_views: 11600,
+  youtube_watch_hours: 659,
+  youtube_video_count: 3,
+  email_list: 2217,
+  software_expenses: 5000,
+  other_expenses: null,
+  profit: 514000,
+  stripe_gross_revenue: null,
+  stripe_net_revenue: null,
+  stripe_fees: null,
+  stripe_refunds: null,
+  stripe_charge_count: null,
+  stripe_synced_at: null,
+  stripe_period_start: null,
+  stripe_period_end: null,
+} satisfies Partial<MonthlyMetric>;
+
 function normalizeMetric(row: MetricRow): MonthlyMetric {
-  return {
+  const metric = {
     id: row.id,
     month: Number(row.month),
     year: Number(row.year),
@@ -53,6 +85,12 @@ function normalizeMetric(row: MetricRow): MonthlyMetric {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
+
+  if (metric.month === 5 && metric.year === 2026) {
+    return { ...metric, ...MAY_2026_MANUAL_METRIC };
+  }
+
+  return metric;
 }
 
 function normalizeQuarter(row: QuarterRow): QuarterReview {
