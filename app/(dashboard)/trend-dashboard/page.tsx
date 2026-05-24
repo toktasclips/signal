@@ -21,6 +21,14 @@ function formatValue(value: number, prefix: string, suffix: string): string {
     if (value >= 1000) return `₺${(value / 1000).toFixed(0)}K`
     return `₺${value.toLocaleString("tr-TR")}`
   }
+  if (prefix === "$") {
+    if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`
+    return value.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    })
+  }
   if (suffix === "%") return `${value.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}%`
   return `${prefix}${value.toLocaleString("tr-TR")}${suffix}`
 }
@@ -161,7 +169,13 @@ export default async function TrendDashboardPage({
               <KpiCard
                 key={kpi.key}
                 title={kpi.label}
-                value={formatValue(kpi.value, kpi.prefix, kpi.suffix)}
+                value={formatValue(
+                  kpi.value,
+                  latestMetric.stripe_synced_at && ["cash_collected", "profit"].includes(kpi.key)
+                    ? "$"
+                    : kpi.prefix,
+                  kpi.suffix
+                )}
                 change={kpi.change}
                 icon={kpiIcons[i]}
               />
@@ -213,7 +227,7 @@ const metricLogGroups: Array<{
   items: Array<{
     label: string
     key: keyof MonthlyMetric
-    format: "currency" | "number" | "decimal" | "hours" | "ratio" | "text"
+    format: "currency" | "usd" | "number" | "decimal" | "hours" | "ratio" | "text"
   }>
 }> = [
   {
@@ -223,10 +237,10 @@ const metricLogGroups: Array<{
       { label: "Yeni Deal Value", key: "new_deal_value", format: "currency" },
       { label: "Toplam Gelir", key: "cash_collected", format: "currency" },
       { label: "Kâr", key: "profit", format: "currency" },
-      { label: "Stripe Brüt Gelir", key: "stripe_gross_revenue", format: "currency" },
-      { label: "Stripe Net Gelir", key: "stripe_net_revenue", format: "currency" },
-      { label: "Stripe Fee", key: "stripe_fees", format: "currency" },
-      { label: "Stripe Refund", key: "stripe_refunds", format: "currency" },
+      { label: "Stripe Brüt Gelir", key: "stripe_gross_revenue", format: "usd" },
+      { label: "Stripe Net Gelir", key: "stripe_net_revenue", format: "usd" },
+      { label: "Stripe Fee", key: "stripe_fees", format: "usd" },
+      { label: "Stripe Refund", key: "stripe_refunds", format: "usd" },
       { label: "Yazılım Harcamaları", key: "software_expenses", format: "currency" },
       { label: "Diğer Harcamalar", key: "other_expenses", format: "currency" },
     ],
@@ -291,7 +305,14 @@ function MetricLogPanel({ metric }: { metric: MonthlyMetric }) {
                   <div key={item.key} className="flex items-center justify-between gap-4 py-2.5 text-sm">
                     <span className="text-muted-foreground">{item.label}</span>
                     <span className={missing ? "text-muted-foreground/55" : "font-medium text-foreground tabular-nums"}>
-                      {missing ? "Eksik" : formatLogValue(value, item.format)}
+                      {missing
+                        ? "Eksik"
+                        : formatLogValue(
+                            value,
+                            metric.stripe_synced_at && ["cash_collected", "profit"].includes(item.key)
+                              ? "usd"
+                              : item.format
+                          )}
                     </span>
                   </div>
                 )
@@ -312,9 +333,16 @@ function MetricLogPanel({ metric }: { metric: MonthlyMetric }) {
 
 function formatLogValue(
   value: MonthlyMetric[keyof MonthlyMetric],
-  format: "currency" | "number" | "decimal" | "hours" | "ratio" | "text"
+  format: "currency" | "usd" | "number" | "decimal" | "hours" | "ratio" | "text"
 ): string {
   if (typeof value !== "number") return String(value)
+  if (format === "usd") {
+    return value.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    })
+  }
   if (format === "currency") return `₺${value.toLocaleString("tr-TR")}`
   if (format === "hours") return `${value.toLocaleString("tr-TR")} sa`
   if (format === "ratio") return `${value.toLocaleString("tr-TR")}x`

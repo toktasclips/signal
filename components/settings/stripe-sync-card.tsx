@@ -17,8 +17,12 @@ interface StripeSyncResult {
 
 const initialState: ActionState<StripeSyncResult> = { status: "idle" };
 
-function currency(value: number): string {
-  return `₺${value.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`;
+function usd(value: number): string {
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  });
 }
 
 export function StripeSyncCard({ periodLabel }: { periodLabel: string }) {
@@ -42,7 +46,7 @@ export function StripeSyncCard({ periodLabel }: { periodLabel: string }) {
               Stripe verileri sadece {periodLabel} döneminden itibaren çekilir.
               Önceki manuel/import edilmiş KPI kayıtları değiştirilmez. Sync
               sonucu bu dönemin Toplam Gelir ve net gelir alanlarını Stripe
-              kaynaklı olarak günceller.
+              kaynaklı USD tutarlarla günceller.
             </p>
           </div>
         </div>
@@ -64,10 +68,10 @@ export function StripeSyncCard({ periodLabel }: { periodLabel: string }) {
       {state.status === "success" && state.data && (
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
           <SyncStat label="Dönem" value={state.data.period} />
-          <SyncStat label="Brüt Gelir" value={currency(state.data.grossRevenue)} />
-          <SyncStat label="Net Gelir" value={currency(state.data.netRevenue)} />
-          <SyncStat label="Stripe Fee" value={currency(state.data.fees)} />
-          <SyncStat label="Refund" value={currency(state.data.refunds)} />
+          <SyncStat label="Brüt Gelir" value={usd(state.data.grossRevenue)} />
+          <SyncStat label="Net Gelir" value={usd(state.data.netRevenue)} />
+          <SyncStat label="Stripe Fee" value={usd(state.data.fees)} />
+          <SyncStat label="Refund" value={usd(state.data.refunds)} />
           <SyncStat label="Charge" value={String(state.data.chargeCount)} />
         </div>
       )}
