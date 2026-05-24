@@ -20,6 +20,7 @@ async function getAuthUser() {
 function revalidateAll() {
   revalidatePath("/campaigns");
   revalidatePath("/campaign-calendar");
+  revalidatePath("/launch-plans");
   revalidatePath("/leads");
   revalidatePath("/signals");
 }

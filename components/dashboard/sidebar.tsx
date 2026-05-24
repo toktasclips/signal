@@ -16,6 +16,7 @@ import {
   Trophy,
   CalendarPlus,
   Database,
+  Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,11 @@ const navItems = [
     label: "Kampanya Takvimi",
     href: "/campaign-calendar",
     icon: CalendarPlus,
+  },
+  {
+    label: "Lansman Planları",
+    href: "/launch-plans",
+    icon: Rocket,
   },
   {
     label: "Tasks",

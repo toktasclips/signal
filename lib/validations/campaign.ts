@@ -66,7 +66,7 @@ export const campaignCalendarItemSchema = z
       .string()
       .min(1, "Target segment is required")
       .max(180, "Target segment too long"),
-    offer: z.string().min(1, "Offer is required").max(220, "Offer too long"),
+    offer: z.string().min(1, "Offer is required").max(1000, "Offer too long"),
     channel: z.enum(CAMPAIGN_CALENDAR_CHANNELS),
     planned_date: z.string().min(1, "Planned date is required"),
     end_date: z
@@ -99,7 +99,7 @@ export type CampaignCalendarItemInput = z.infer<typeof campaignCalendarItemSchem
 export const campaignLaunchPlanItemSchema = z.object({
   day: z.number().int().min(1).max(14),
   title: z.string().min(1, "Title is required").max(180, "Title too long"),
-  offer: z.string().min(1, "Offer is required").max(220, "Offer too long"),
+  offer: z.string().min(1, "Offer is required").max(1000, "Offer too long"),
   notes: z.string().max(2000).optional().nullable().transform((v) => v || null),
   expected_revenue: z.preprocess(
     (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
