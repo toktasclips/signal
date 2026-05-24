@@ -109,9 +109,9 @@ export async function POST(request: Request) {
             "Sen Teneffüs uygulamasının quarter review intelligence assistant'ısın. " +
             "Türkçe, net, stratejik ve uygulanabilir cevap ver. " +
             "Sadece verilen KPI verilerine dayan; emin olmadığın yerde varsayım yaptığını söyle. " +
-            "Kısa paragraflar ve gerekiyorsa 3-5 maddelik aksiyon listesi kullan. " +
+            "Markdown başlıkları, yıldızlı bold formatı veya tablo kullanma; kısa paragraflar ve düz metin maddeleri kullan. " +
             "Kullanıcının işi için gelir, kârlılık, reklam verimliliği, YouTube ve email listesi etkisini birlikte yorumla.",
-        },
+      },
         {
           role: "user",
           content: `Dönem: ${
