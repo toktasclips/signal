@@ -205,12 +205,6 @@ export default async function TrendDashboardPage({
         </div>
 
         <MetricLogPanel metric={selectedMetric} />
-
-        <div className="text-center py-4 pb-8">
-          <p className="text-xs text-muted-foreground">
-            Veriler Supabase üzerinden okunuyor. KPI Girişi sayfasındaki kayıtlar bu dashboard'a yansır.
-          </p>
-        </div>
       </div>
     </div>
   )
@@ -296,12 +290,6 @@ function MetricLogPanel({ metric }: { metric: MonthlyMetric }) {
           </div>
         ))}
       </div>
-      {metric.notes && (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-card">
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Not</h3>
-          <p className="text-sm leading-relaxed text-muted-foreground">{metric.notes}</p>
-        </div>
-      )}
     </section>
   )
 }
