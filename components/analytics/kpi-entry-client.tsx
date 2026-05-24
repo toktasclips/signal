@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { saveMonthlyMetric } from "@/actions/analytics"
 import { TURKISH_MONTHS } from "@/lib/analytics/mock-data"
+import { getCurrentKpiPeriod } from "@/lib/analytics/period"
 import { CheckCircle, AlertTriangle, Loader2 } from "lucide-react"
 import type { FormEvent } from "react"
 import type { MonthlyMetric } from "@/lib/analytics/types"
@@ -18,8 +19,10 @@ interface FormState {
   software_expenses: string; other_expenses: string; notes: string
 }
 
-const initialState: FormState = {
-  month: new Date().getMonth() + 1, year: new Date().getFullYear(), total_goal: "", new_deal_value: "",
+const currentPeriod = getCurrentKpiPeriod()
+
+const emptyState: FormState = {
+  month: currentPeriod.month, year: currentPeriod.year, total_goal: "", new_deal_value: "",
   monthly_recurring_revenue: "", cash_collected: "", profit: "", ad_spend: "",
   cpm: "", roas: "", instagram_reach: "", instagram_impressions: "", new_customers: "",
   instagram_followers: "", engagement: "", profile_visits: "", youtube_subscribers: "",
@@ -28,7 +31,42 @@ const initialState: FormState = {
   other_expenses: "", notes: "",
 }
 
-const YEARS = [2022, 2023, 2024, 2025, 2026]
+function valueFromMetric(metric: MonthlyMetric | undefined, key: keyof Omit<FormState, "month" | "year" | "notes">): string {
+  const value = metric?.[key]
+  return value === null || value === undefined ? "" : String(value)
+}
+
+function buildInitialState(metric: MonthlyMetric | undefined): FormState {
+  if (!metric) return emptyState
+  return {
+    month: currentPeriod.month,
+    year: currentPeriod.year,
+    total_goal: valueFromMetric(metric, "total_goal"),
+    new_deal_value: valueFromMetric(metric, "new_deal_value"),
+    monthly_recurring_revenue: valueFromMetric(metric, "monthly_recurring_revenue"),
+    cash_collected: valueFromMetric(metric, "cash_collected"),
+    profit: valueFromMetric(metric, "profit"),
+    ad_spend: valueFromMetric(metric, "ad_spend"),
+    cpm: valueFromMetric(metric, "cpm"),
+    roas: valueFromMetric(metric, "roas"),
+    instagram_reach: valueFromMetric(metric, "instagram_reach"),
+    instagram_impressions: valueFromMetric(metric, "instagram_impressions"),
+    new_customers: valueFromMetric(metric, "new_customers"),
+    instagram_followers: valueFromMetric(metric, "instagram_followers"),
+    engagement: valueFromMetric(metric, "engagement"),
+    profile_visits: valueFromMetric(metric, "profile_visits"),
+    youtube_subscribers: valueFromMetric(metric, "youtube_subscribers"),
+    youtube_views: valueFromMetric(metric, "youtube_views"),
+    youtube_watch_hours: valueFromMetric(metric, "youtube_watch_hours"),
+    youtube_video_count: valueFromMetric(metric, "youtube_video_count"),
+    shares: valueFromMetric(metric, "shares"),
+    email_list: valueFromMetric(metric, "email_list"),
+    software_expenses: valueFromMetric(metric, "software_expenses"),
+    other_expenses: valueFromMetric(metric, "other_expenses"),
+    notes: metric.notes ?? "",
+  }
+}
+
 const inputClass = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/30"
 const labelClass = "mb-1 block text-xs text-muted-foreground"
 
@@ -71,12 +109,13 @@ const sections: SectionConfig[] = [
 ]
 
 export function KpiEntryClient({ initialMetrics }: { initialMetrics: MonthlyMetric[] }) {
-  const [form, setForm] = useState<FormState>(initialState)
+  const existingEntry = initialMetrics.find((m) => m.month === currentPeriod.month && m.year === currentPeriod.year)
+  const [form, setForm] = useState<FormState>(() => buildInitialState(existingEntry))
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const existingEntry = initialMetrics.find((m) => m.month === form.month && m.year === form.year)
+  const isLocked = Boolean(existingEntry)
 
   const handleChange = (key: keyof FormState, value: string | number) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -103,32 +142,38 @@ export function KpiEntryClient({ initialMetrics }: { initialMetrics: MonthlyMetr
     <div className="min-h-full bg-background">
       <div className="border-b border-border bg-background/95 px-6 py-6 backdrop-blur lg:px-10">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">KPI Girişi</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Aylık metriklerinizi Supabase'e kaydedin</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          KPI dönemi 25&apos;ten 25&apos;e hesaplanır ve her dönem sadece bir kere kaydedilir.
+        </p>
       </div>
 
       <div className="mx-auto max-w-3xl px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="rounded-xl border border-border bg-card p-5 shadow-card">
-            <h2 className="mb-4 text-sm font-semibold text-foreground">Dönem Seçimi</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Ay</label>
-                <select name="month" value={form.month} onChange={(e) => handleChange("month", Number(e.target.value))} className={inputClass}>
-                  {TURKISH_MONTHS.map((name, i) => (<option key={i + 1} value={i + 1}>{name}</option>))}
-                </select>
+            <h2 className="mb-4 text-sm font-semibold text-foreground">Aktif KPI Dönemi</h2>
+            <input type="hidden" name="month" value={form.month} />
+            <input type="hidden" name="year" value={form.year} />
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Dönem</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">
+                  {TURKISH_MONTHS[form.month - 1]} {form.year}
+                </p>
               </div>
-              <div>
-                <label className={labelClass}>Yıl</label>
-                <select name="year" value={form.year} onChange={(e) => handleChange("year", Number(e.target.value))} className={inputClass}>
-                  {YEARS.map((y) => (<option key={y} value={y}>{y}</option>))}
-                </select>
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Başlangıç</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">{currentPeriod.periodStart}</p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 px-3 py-2.5">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Kapanış</p>
+                <p className="mt-1 text-sm font-semibold text-foreground">{currentPeriod.periodEnd}</p>
               </div>
             </div>
             {existingEntry && (
               <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5">
                 <AlertTriangle size={15} className="mt-0.5 flex-shrink-0 text-amber-700" />
                 <p className="text-xs text-amber-700">
-                  <span className="font-semibold">Uyarı:</span> {TURKISH_MONTHS[form.month - 1]} {form.year} için mevcut bir kayıt var. Kaydetmeniz durumunda üzerine yazılacak.
+                  <span className="font-semibold">Kilitli:</span> {TURKISH_MONTHS[form.month - 1]} {form.year} dönemi zaten kaydedilmiş. Yeni KPI girişi bir sonraki 25-25 döneminde açılır.
                 </p>
               </div>
             )}
@@ -144,7 +189,7 @@ export function KpiEntryClient({ initialMetrics }: { initialMetrics: MonthlyMetr
                 {section.fields.map((field) => (
                   <div key={field.key}>
                     <label className={labelClass}>{field.label}</label>
-                    <input name={field.key} type="number" step={field.step ?? "1"} min={field.min} placeholder={field.placeholder ?? "0"} value={form[field.key]} onChange={(e) => handleChange(field.key, e.target.value)} className={inputClass} />
+                    <input name={field.key} type="number" step={field.step ?? "1"} min={field.min} placeholder={field.placeholder ?? "0"} value={form[field.key]} onChange={(e) => handleChange(field.key, e.target.value)} className={inputClass} disabled={isLocked} />
                   </div>
                 ))}
               </div>
@@ -158,7 +203,7 @@ export function KpiEntryClient({ initialMetrics }: { initialMetrics: MonthlyMetr
             </div>
             <div>
               <label className={labelClass}>Bu ay hakkında notlarınız</label>
-              <textarea name="notes" rows={4} placeholder="Önemli gelişmeler, kampanyalar, değerlendirmeler..." value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} className={`${inputClass} resize-none`} />
+              <textarea name="notes" rows={4} placeholder="Önemli gelişmeler, kampanyalar, değerlendirmeler..." value={form.notes} onChange={(e) => handleChange("notes", e.target.value)} className={`${inputClass} resize-none`} disabled={isLocked} />
             </div>
           </div>
 
@@ -177,9 +222,9 @@ export function KpiEntryClient({ initialMetrics }: { initialMetrics: MonthlyMetr
           )}
 
           <div className="flex justify-end pb-8">
-            <button type="submit" disabled={loading} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="submit" disabled={loading || isLocked} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
               {loading && <Loader2 size={15} className="animate-spin" />}
-              {loading ? "Kaydediliyor..." : "Kaydet"}
+              {loading ? "Kaydediliyor..." : isLocked ? "Dönem Kaydedildi" : "Kaydet"}
             </button>
           </div>
         </form>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentKpiPeriod } from "@/lib/analytics/period";
 import type { ActionState } from "@/types";
 
 const numericFields = [
@@ -48,10 +49,23 @@ export async function saveMonthlyMetric(formData: FormData): Promise<ActionState
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", error: "Unauthorized" };
 
-  const month = Number(formData.get("month"));
-  const year = Number(formData.get("year"));
-  if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year)) {
-    return { status: "error", error: "Invalid period." };
+  const period = getCurrentKpiPeriod();
+  const month = period.month;
+  const year = period.year;
+
+  const { data: existing } = await supabase
+    .from("monthly_metrics")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("month", month)
+    .eq("year", year)
+    .maybeSingle();
+
+  if (existing?.id) {
+    return {
+      status: "error",
+      error: "Bu KPI dönemi zaten kaydedilmiş. Her 25-25 dönemi için sadece bir kayıt açılır.",
+    };
   }
 
   const payload: Record<string, unknown> = {
@@ -67,7 +81,7 @@ export async function saveMonthlyMetric(formData: FormData): Promise<ActionState
 
   const { error } = await supabase
     .from("monthly_metrics")
-    .upsert(payload, { onConflict: "user_id,month,year" });
+    .insert(payload);
 
   if (error) return { status: "error", error: "Failed to save KPI data." };
 
