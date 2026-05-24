@@ -231,7 +231,16 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
           </div>
         </div>
 
-        <form action={formAction} className="space-y-5">
+        <form
+          action={formAction}
+          className="space-y-5"
+          onSubmit={(event) => {
+            if (step < 5) {
+              event.preventDefault();
+              next();
+            }
+          }}
+        >
           <input type="hidden" name="launch_name" value={launchName} />
           <input type="hidden" name="duration" value={duration} />
           <input type="hidden" name="start_date" value={startDate} />
@@ -239,7 +248,7 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
           <input type="hidden" name="channel" value="Platform Launch" />
           <input type="hidden" name="items" value={payload} />
 
-          {state.status === "error" && (
+          {step === 5 && state.status === "error" && (
             <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
               <p className="text-xs text-destructive">
                 {state.error ?? "Lansman planı oluşturulamadı."}
