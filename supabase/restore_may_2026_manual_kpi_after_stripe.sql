@@ -1,6 +1,10 @@
 -- Restore May 2026 manual KPI values after an accidental Stripe sync overwrite.
--- Keeps Stripe-specific audit fields intact, but returns the business KPI fields
--- to the user-provided spreadsheet values.
+-- May 2026 must remain spreadsheet/manual data. Stripe starts from the next
+-- operating period: 2026-05-25 - 2026-06-25.
+
+ALTER TABLE public.monthly_metrics
+  ADD COLUMN IF NOT EXISTS youtube_views integer,
+  ADD COLUMN IF NOT EXISTS youtube_video_count integer;
 
 WITH owner AS (
   SELECT id AS user_id
@@ -31,9 +35,29 @@ SET
   software_expenses = 5000,
   other_expenses = NULL,
   profit = 514000,
+  stripe_gross_revenue = NULL,
+  stripe_net_revenue = NULL,
+  stripe_fees = NULL,
+  stripe_refunds = NULL,
+  stripe_charge_count = NULL,
+  stripe_period_start = NULL,
+  stripe_period_end = NULL,
+  stripe_synced_at = NULL,
   notes = '25 Mayıs screenshot import. Software subscriptions tracked separately.',
   updated_at = now()
 FROM owner
 WHERE monthly_metrics.user_id = owner.user_id
   AND monthly_metrics.month = 5
   AND monthly_metrics.year = 2026;
+
+WITH owner AS (
+  SELECT id AS user_id
+  FROM auth.users
+  WHERE email = 'mtoktas252@gmail.com'
+  LIMIT 1
+)
+DELETE FROM public.stripe_sync_runs
+USING owner
+WHERE stripe_sync_runs.user_id = owner.user_id
+  AND stripe_sync_runs.period_start = DATE '2026-04-25'
+  AND stripe_sync_runs.period_end = DATE '2026-05-25';

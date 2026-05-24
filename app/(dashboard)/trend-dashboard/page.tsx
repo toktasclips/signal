@@ -169,13 +169,7 @@ export default async function TrendDashboardPage({
               <KpiCard
                 key={kpi.key}
                 title={kpi.label}
-                value={formatValue(
-                  kpi.value,
-                  latestMetric.stripe_synced_at && ["cash_collected", "profit"].includes(kpi.key)
-                    ? "$"
-                    : kpi.prefix,
-                  kpi.suffix
-                )}
+                value={formatValue(kpi.value, kpi.prefix, kpi.suffix)}
                 change={kpi.change}
                 icon={kpiIcons[i]}
               />
@@ -323,12 +317,7 @@ function MetricLogPanel({ metric }: { metric: MonthlyMetric }) {
                     <span className={missing ? "text-muted-foreground/55" : "font-medium text-foreground tabular-nums"}>
                       {missing
                         ? "Eksik"
-                        : formatLogValue(
-                            value,
-                            metric.stripe_synced_at && ["cash_collected", "profit"].includes(item.key)
-                              ? "usd"
-                              : item.format
-                          )}
+                        : formatLogValue(value, item.format)}
                     </span>
                   </div>
                 )
