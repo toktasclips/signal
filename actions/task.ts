@@ -16,7 +16,6 @@ async function getAuthUser() {
 function revalidateAll() {
   revalidatePath("/tasks");
   revalidatePath("/leads");
-  revalidatePath("/signals");
 }
 
 export async function createTask(

@@ -21,7 +21,6 @@ function revalidateAll() {
   revalidatePath("/campaigns");
   revalidatePath("/launch-plans");
   revalidatePath("/leads");
-  revalidatePath("/signals");
 }
 
 export async function createCampaign(

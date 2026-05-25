@@ -30,5 +30,5 @@ export async function dismissRelationshipInsight(id: string): Promise<void> {
     .eq("id", id)
     .eq("user_id", user.id);
 
-  revalidatePath("/signals");
+  revalidatePath("/leads");
 }

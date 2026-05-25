@@ -9,7 +9,6 @@ import {
   CheckSquare,
   Settings,
   Building2,
-  Sparkles,
   BarChart2,
   TrendingUp,
   PlusCircle,
@@ -39,11 +38,6 @@ const navItems = [
     label: "Tasks",
     href: "/tasks",
     icon: CheckSquare,
-  },
-  {
-    label: "Signals",
-    href: "/signals",
-    icon: Sparkles,
   },
   {
     label: "Calendar",
