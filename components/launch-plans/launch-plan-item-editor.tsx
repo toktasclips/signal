@@ -152,21 +152,7 @@ export function LaunchPlanItemEditor({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notlar</Label>
-              <input
-                type="hidden"
-                name="system_notes"
-                value={noteParts.systemNotes}
-              />
-              <Textarea
-                id="notes"
-                name="notes"
-                defaultValue={noteParts.notes}
-                placeholder="CTA, takip fikri, görsel notu, yayın saati..."
-                className="min-h-36 resize-y leading-7"
-              />
-            </div>
+            <input type="hidden" name="system_notes" value={noteParts.systemNotes} />
           </div>
         </div>
       </form>

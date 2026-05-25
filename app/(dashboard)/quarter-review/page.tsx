@@ -18,6 +18,21 @@ interface QuarterGroup {
   metrics: MonthlyMetric[]
 }
 
+interface MetaCampaignInsight {
+  campaign_name: string
+  period_start: string
+  period_end: string
+  spend: number | string
+  reach: number
+  impressions: number
+  clicks: number
+  ctr: number | string
+  cpm: number | string
+  result_type: string | null
+  results: number | string
+  cost_per_result: number | string
+}
+
 const sectionDefs: Array<{
   key: ReviewSection
   label: string
@@ -125,6 +140,21 @@ function formatMonths(metrics: MonthlyMetric[]): string {
     .join(", ")
 }
 
+function periodWindow(metrics: MonthlyMetric[]): { start: string; endExclusive: string } {
+  const sorted = [...metrics].sort((a, b) =>
+    a.year !== b.year ? a.year - b.year : a.month - b.month
+  )
+  const first = sorted[0]
+  const last = sorted[sorted.length - 1]
+  const start = new Date(Date.UTC(first.year, first.month - 1, 1))
+  const endExclusive = new Date(Date.UTC(last.year, last.month, 1))
+
+  return {
+    start: start.toISOString().slice(0, 10),
+    endExclusive: endExclusive.toISOString().slice(0, 10),
+  }
+}
+
 function pct(value: number): string {
   return `%${value.toFixed(1)}`
 }
@@ -134,7 +164,10 @@ function profitMargin(revenue: number, profit: number): number {
   return (profit / revenue) * 100
 }
 
-function buildReview(group: QuarterGroup): Record<ReviewSection, string[]> {
+function buildReview(
+  group: QuarterGroup,
+  metaCampaigns: MetaCampaignInsight[]
+): Record<ReviewSection, string[]> {
   const { metrics } = group
   const first = metrics[0]
   const last = metrics[metrics.length - 1]
@@ -153,6 +186,30 @@ function buildReview(group: QuarterGroup): Record<ReviewSection, string[]> {
   const followerGrowth =
     Number(last.instagram_followers ?? 0) - Number(first.instagram_followers ?? 0)
   const emailList = lastValue(metrics, "email_list")
+  const metaSpend = metaCampaigns.reduce(
+    (total, campaign) => total + Number(campaign.spend ?? 0),
+    0
+  )
+  const metaResults = metaCampaigns.reduce(
+    (total, campaign) => total + Number(campaign.results ?? 0),
+    0
+  )
+  const avgCostPerResult = metaResults > 0 ? metaSpend / metaResults : 0
+  const highestResultCampaign = [...metaCampaigns].sort(
+    (a, b) => Number(b.results ?? 0) - Number(a.results ?? 0)
+  )[0]
+  const highestSpendCampaign = [...metaCampaigns].sort(
+    (a, b) => Number(b.spend ?? 0) - Number(a.spend ?? 0)
+  )[0]
+  const weakSpendCampaign = [...metaCampaigns]
+    .filter((campaign) => Number(campaign.spend ?? 0) > 0)
+    .sort((a, b) => {
+      const aResults = Number(a.results ?? 0)
+      const bResults = Number(b.results ?? 0)
+      if (aResults === 0 && bResults > 0) return -1
+      if (bResults === 0 && aResults > 0) return 1
+      return Number(b.cost_per_result ?? 0) - Number(a.cost_per_result ?? 0)
+    })[0]
 
   const wins = [
     `Toplam gelir ${formatCurrency(revenue)} olarak kaydedildi.`,
@@ -166,6 +223,13 @@ function buildReview(group: QuarterGroup): Record<ReviewSection, string[]> {
   if (watchHours > 0) wins.push(`YouTube izlenme saati ${formatNumber(watchHours)} sa.`)
   if (customers > 0) wins.push(`${formatNumber(customers)} yeni müşteri kaydı var.`)
   if (followerGrowth > 0) wins.push(`Instagram takipçi artışı ${formatNumber(followerGrowth)}.`)
+  if (highestResultCampaign && Number(highestResultCampaign.results ?? 0) > 0) {
+    wins.push(
+      `Meta'da en çok sonuç üreten kampanya "${highestResultCampaign.campaign_name}" (${formatNumber(
+        Number(highestResultCampaign.results)
+      )} sonuç, sonuç başı ₺${Number(highestResultCampaign.cost_per_result ?? 0).toLocaleString("tr-TR")}).`
+    )
+  }
 
   const bottlenecks = []
   if (adSpend > 0 && avgRoas < 4) {
@@ -177,6 +241,13 @@ function buildReview(group: QuarterGroup): Record<ReviewSection, string[]> {
   if (customers === 0) bottlenecks.push("Yeni müşteri sayısı bu dönem için eksik veya 0 görünüyor.")
   if (watchHours === 0) bottlenecks.push("Watch time verisi eksik; içerik etkisi okunamıyor.")
   if (!last.instagram_followers) bottlenecks.push("Instagram takipçi sayısı dönem sonunda eksik.")
+  if (metaCampaigns.length === 0) {
+    bottlenecks.push("Meta kampanya kaynak verisi bu dönem için henüz yok; reklam harcamasının hangi kampanyadan geldiği okunamıyor.")
+  } else if (weakSpendCampaign && Number(weakSpendCampaign.results ?? 0) === 0) {
+    bottlenecks.push(
+      `"${weakSpendCampaign.campaign_name}" harcama almış ama sonuç üretmemiş görünüyor; kreatif, hedefleme veya optimizasyon amacı kontrol edilmeli.`
+    )
+  }
   if (bottlenecks.length === 0) bottlenecks.push("Kritik darboğaz görünmüyor; mevcut ritim korunabilir.")
 
   const opportunities = [
@@ -186,6 +257,16 @@ function buildReview(group: QuarterGroup): Record<ReviewSection, string[]> {
   if (avgRoas >= 6) opportunities.push("ROAS güçlü; çalışan reklam açısını ölçekleme fırsatı var.")
   if (emailList > 0) opportunities.push(`Mail listesi ${formatNumber(emailList)} seviyesinde; satış kampanyaları için kullanılabilir.`)
   if (adSpend > 0) opportunities.push("Reklam harcaması yüksek günlerde nakit tahsilat etkisini ayrıca ölç.")
+  if (highestResultCampaign && avgCostPerResult > 0) {
+    opportunities.push(
+      `"${highestResultCampaign.campaign_name}" sonuç üretimi açısından referans alınabilir; yeni kampanya brief'leri bu açıdan türetilebilir.`
+    )
+  }
+  if (highestSpendCampaign && highestSpendCampaign !== highestResultCampaign) {
+    opportunities.push(
+      `En yüksek harcama "${highestSpendCampaign.campaign_name}" üzerinde; bütçe dağılımını sonuç başı ücretle birlikte yeniden tart.`
+    )
+  }
 
   const next_focus = [
     "Bir sonraki dönemde toplam gelir, kâr ve kârlılık yüzdesini birlikte takip et.",
@@ -193,6 +274,13 @@ function buildReview(group: QuarterGroup): Record<ReviewSection, string[]> {
   ]
   if (avgRoas > 0) next_focus.push(`ROAS hedefini en az ${Math.max(4, Math.ceil(avgRoas))}x bandında koru.`)
   if (watchHours > 0) next_focus.push("YouTube izlenme saatini gelirle beraber haftalık takip et.")
+  if (metaCampaigns.length > 0) {
+    next_focus.push(
+      `Meta için sonuç başı ücret referansı ₺${avgCostPerResult.toLocaleString("tr-TR", {
+        maximumFractionDigits: 2,
+      })}; yeni kampanyalarda bu eşiğin üstüne çıkan setleri erken durdur.`
+    )
+  }
 
   return { wins, bottlenecks, opportunities, next_focus }
 }
@@ -245,7 +333,18 @@ export default async function QuarterReviewPage({
     )
   }
 
-  const review = buildReview(activeGroup)
+  const { start, endExclusive } = periodWindow(activeGroup.metrics)
+  const { data: metaCampaignData } = await supabase
+    .from("meta_ads_campaign_insights")
+    .select(
+      "campaign_name,period_start,period_end,spend,reach,impressions,clicks,ctr,cpm,result_type,results,cost_per_result"
+    )
+    .gte("period_end", start)
+    .lt("period_start", endExclusive)
+    .order("spend", { ascending: false })
+    .limit(30)
+  const metaCampaigns = (metaCampaignData as MetaCampaignInsight[] | null) ?? []
+  const review = buildReview(activeGroup, metaCampaigns)
 
   return (
     <div className="min-h-full bg-background">
