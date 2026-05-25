@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { CreditCard, Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
@@ -99,28 +98,21 @@ function resultLabel(value: string | null): string {
 
 export default async function SourceDataPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const [stripeResult, metaResult, campaignResult] = await Promise.all([
     supabase
       .from("stripe_sync_runs")
       .select("*")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(12),
     supabase
       .from("meta_ads_sync_runs")
       .select("*")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(12),
     supabase
       .from("meta_ads_campaign_insights")
       .select("*")
-      .eq("user_id", user.id)
       .order("period_start", { ascending: false })
       .order("spend", { ascending: false })
       .limit(200),

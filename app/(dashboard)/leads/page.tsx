@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SalesWorkspace } from "@/components/leads/sales-workspace";
 import type { Campaign, Lead } from "@/types";
@@ -21,20 +20,16 @@ export default async function LeadsPage({
   searchParams?: Promise<{ view?: string }>;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
   const params = await searchParams;
 
   const [{ data: leads }, { data: campaigns }] = await Promise.all([
     supabase
       .from("leads")
       .select("*")
-      .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
     supabase
       .from("campaigns")
       .select("id, name, type")
-      .eq("user_id", user.id)
       .order("name"),
   ]);
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { isMetaSyncOwner } from "@/lib/integrations/access";
 import { syncMetaAdsCurrentPeriod } from "@/lib/meta/sync";
 import type { ActionState } from "@/types";
 
@@ -25,6 +26,12 @@ export async function syncCurrentMetaAdsPeriod(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", error: "Unauthorized" };
+  if (!isMetaSyncOwner(user.email)) {
+    return {
+      status: "error",
+      error: "Meta Ads sync is only available for the configured owner account.",
+    };
+  }
 
   try {
     const summary = await syncMetaAdsCurrentPeriod(user.id);

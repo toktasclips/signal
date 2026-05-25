@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LaunchPlansClient } from "@/components/launch-plans/launch-plans-client";
 import type { CampaignCalendarItem } from "@/types";
@@ -24,15 +23,12 @@ function normalizeItem(row: CampaignCalendarRow): CampaignCalendarItem {
 
 export default async function LaunchPlansPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const { data } = await supabase
     .from("campaign_calendar_items")
-    .select("*")
-    .eq("user_id", user.id)
+    .select(
+      "id,user_id,title,target_segment,offer,channel,planned_date,end_date,expected_revenue,status,notes,created_at,updated_at"
+    )
     .eq("channel", "Platform Launch")
     .ilike("notes", "%Lansman:%")
     .order("planned_date", { ascending: true })

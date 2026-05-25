@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { isStripeSyncOwner } from "@/lib/integrations/access";
 import { syncStripeCurrentPeriod } from "@/lib/stripe/sync";
 import type { ActionState } from "@/types";
 
@@ -22,6 +23,12 @@ export async function syncCurrentStripePeriod(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { status: "error", error: "Unauthorized" };
+  if (!isStripeSyncOwner(user.email)) {
+    return {
+      status: "error",
+      error: "Stripe sync is only available for the configured owner account.",
+    };
+  }
 
   try {
     const summary = await syncStripeCurrentPeriod(user.id);

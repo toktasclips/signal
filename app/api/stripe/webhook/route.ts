@@ -15,6 +15,7 @@ const SUPPORTED_EVENTS = new Set([
   "invoice.payment_succeeded",
   "payment_intent.succeeded",
 ]);
+const SIGNATURE_TOLERANCE_SECONDS = 300;
 
 interface StripeEvent {
   id: string;
@@ -34,6 +35,10 @@ function verifyStripeSignature(payload: string, signature: string | null): boole
   const timestamp = parts.t;
   const expected = parts.v1;
   if (!timestamp || !expected) return false;
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds)) return false;
+  const ageSeconds = Math.abs(Math.floor(Date.now() / 1000) - timestampSeconds);
+  if (ageSeconds > SIGNATURE_TOLERANCE_SECONDS) return false;
 
   const signedPayload = `${timestamp}.${payload}`;
   const computed = createHmac("sha256", webhookSecret)

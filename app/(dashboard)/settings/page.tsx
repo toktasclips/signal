@@ -1,5 +1,6 @@
 import { STRIPE_SYNC_START, getCurrentStripePeriod } from "@/lib/stripe/sync";
 import { getCurrentMetaPeriod } from "@/lib/meta/sync";
+import { isMetaSyncOwner, isStripeSyncOwner } from "@/lib/integrations/access";
 import { createClient } from "@/lib/supabase/server";
 import { StripeSyncCard } from "@/components/settings/stripe-sync-card";
 import { MetaAdsSyncCard } from "@/components/settings/meta-ads-sync-card";
@@ -25,6 +26,11 @@ export default async function SettingsPage() {
   const metaPeriod = getCurrentMetaPeriod();
   const syncAvailable = period.periodStart >= STRIPE_SYNC_START;
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const canSyncStripe = isStripeSyncOwner(user?.email);
+  const canSyncMeta = isMetaSyncOwner(user?.email);
   const { data: expenses } = await supabase
     .from("software_expense_items")
     .select("*")
@@ -41,15 +47,19 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <StripeSyncCard
-        periodLabel={`${period.periodStart} - ${period.periodEnd}`}
-        syncStart={STRIPE_SYNC_START}
-        syncAvailable={syncAvailable}
-      />
+      {canSyncStripe && (
+        <StripeSyncCard
+          periodLabel={`${period.periodStart} - ${period.periodEnd}`}
+          syncStart={STRIPE_SYNC_START}
+          syncAvailable={syncAvailable}
+        />
+      )}
 
-      <MetaAdsSyncCard
-        periodLabel={`${metaPeriod.periodStart} - ${metaPeriod.periodEnd}`}
-      />
+      {canSyncMeta && (
+        <MetaAdsSyncCard
+          periodLabel={`${metaPeriod.periodStart} - ${metaPeriod.periodEnd}`}
+        />
+      )}
 
       <SoftwareExpensesCard
         items={((expenses as SoftwareExpenseRow[] | null) ?? []).map(

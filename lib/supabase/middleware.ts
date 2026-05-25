@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = [
   "/forgot-password",
   "/update-password",
   "/auth/callback",
+  "/api/stripe/webhook",
 ];
 
 export async function updateSession(request: NextRequest) {

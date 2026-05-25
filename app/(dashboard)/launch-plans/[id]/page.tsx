@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LaunchPlanItemEditor } from "@/components/launch-plans/launch-plan-item-editor";
 import type { CampaignCalendarItem } from "@/types";
@@ -38,17 +38,14 @@ export default async function LaunchPlanItemPage({
   params: Promise<{ id: string }>;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const { id } = await params;
   const { data } = await supabase
     .from("campaign_calendar_items")
-    .select("*")
+    .select(
+      "id,user_id,title,target_segment,offer,channel,planned_date,end_date,expected_revenue,status,notes,created_at,updated_at"
+    )
     .eq("id", id)
-    .eq("user_id", user.id)
     .eq("channel", "Platform Launch")
     .single();
 
