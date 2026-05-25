@@ -41,6 +41,15 @@ interface MetaAdsCampaignInsight {
   cost_per_result: number | string;
 }
 
+interface UserMonthlyInsight {
+  month: number;
+  year: number;
+  title: string;
+  category: string;
+  body: string;
+  evidence: string | null;
+}
+
 function client(): OpenAI | null {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
@@ -145,6 +154,25 @@ function summarizeMetaData(
     .join("\n");
 }
 
+function summarizeUserInsights(insights: UserMonthlyInsight[]): string {
+  if (insights.length === 0) return "Kullanıcı içgörüsü yok.";
+
+  return insights
+    .slice(0, 18)
+    .map((insight) =>
+      [
+        `${TURKISH_MONTHS[insight.month - 1]} ${insight.year}`,
+        `kategori=${insight.category}`,
+        `başlık=${insight.title}`,
+        `gözlem=${insight.body}`,
+        insight.evidence ? `kanıt=${insight.evidence}` : "",
+      ]
+        .filter(Boolean)
+        .join(" | ")
+    )
+    .join("\n");
+}
+
 function sanitizeHistory(history: RequestBody["history"]) {
   if (!Array.isArray(history)) return [];
   return history
@@ -202,7 +230,13 @@ export async function POST(request: Request) {
 
   try {
     const { start, endExclusive } = periodWindow(metrics);
-    const [syncResult, campaignResult] = await Promise.all([
+    const sortedMetrics = [...metrics].sort((a, b) =>
+      a.year !== b.year ? a.year - b.year : a.month - b.month
+    );
+    const firstMetric = sortedMetrics[0];
+    const lastMetric = sortedMetrics[sortedMetrics.length - 1];
+
+    const [syncResult, campaignResult, userInsightsResult] = await Promise.all([
       supabase
         .from("meta_ads_sync_runs")
         .select("period_start,period_end,spend,reach,impressions,clicks,ctr,cpm")
@@ -219,6 +253,15 @@ export async function POST(request: Request) {
         .lt("period_start", endExclusive)
         .order("spend", { ascending: false })
         .limit(30),
+      supabase
+        .from("user_monthly_insights")
+        .select("month,year,title,category,body,evidence")
+        .gte("year", firstMetric.year)
+        .lte("year", lastMetric.year)
+        .order("year", { ascending: false })
+        .order("month", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(30),
     ]);
 
     const response = await openai.chat.completions.create({
@@ -233,6 +276,7 @@ export async function POST(request: Request) {
             "Türkçe, net, stratejik ve uygulanabilir cevap ver. " +
             "Sadece verilen KPI verilerine dayan; emin olmadığın yerde varsayım yaptığını söyle. " +
             "Meta reklam kaynak verisi varsa kampanya bazlı spend, sonuç, sonuç başı ücret, CPM, CTR ve reach'i yorumla. " +
+            "Kullanıcının kendi aylık içgörüleri varsa bunları sahadan gelen birinci el gözlem olarak dikkate al; KPI ile çelişirse bu çelişkiyi açıkça söyle. " +
             "Sadece genel tavsiye verme; veride görünen en güçlü/zayıf sinyali ve bir sonraki aksiyonu belirt. " +
             "Markdown başlıkları, yıldızlı bold formatı veya tablo kullanma; kısa paragraflar ve düz metin maddeleri kullan. " +
             "Kullanıcının işi için gelir, kârlılık, reklam verimliliği, YouTube ve email listesi etkisini birlikte yorumla.",
@@ -244,6 +288,16 @@ export async function POST(request: Request) {
           }\nKPI verileri:\n${summarizeMetrics(metrics)}\n\nMeta reklam kaynak verileri:\n${summarizeMetaData(
             (syncResult.data as MetaAdsSyncRun[] | null) ?? [],
             (campaignResult.data as MetaAdsCampaignInsight[] | null) ?? []
+          )}\n\nKullanıcının aylık içgörü notları:\n${summarizeUserInsights(
+            ((userInsightsResult.data as UserMonthlyInsight[] | null) ?? []).filter(
+              (insight) =>
+                (insight.year > firstMetric.year ||
+                  (insight.year === firstMetric.year &&
+                    insight.month >= firstMetric.month)) &&
+                (insight.year < lastMetric.year ||
+                  (insight.year === lastMetric.year &&
+                    insight.month <= lastMetric.month))
+            )
           )}`,
         },
         ...sanitizeHistory(body.history),

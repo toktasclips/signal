@@ -54,8 +54,22 @@ export type CampaignCalendarChannel =
   | "YouTube"
   | "Webinar"
   | "Platform Launch"
+  | "Story Sales"
   | "Referral"
   | "Other";
+
+export interface UserMonthlyInsight {
+  id: string;
+  user_id: string;
+  month: number;
+  year: number;
+  title: string;
+  category: string;
+  body: string;
+  evidence: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface CampaignCalendarItem {
   id: string;

@@ -16,6 +16,7 @@ import {
   Database,
   Rocket,
   MessageSquareText,
+  Lightbulb,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +59,7 @@ const analyticsNavItems = [
   { label: "KPI Girişi", href: "/kpi-entry", icon: PlusCircle },
   { label: "Trend Analizi", href: "/trends", icon: TrendingUp },
   { label: "Kaynak Verileri", href: "/source-data", icon: Database },
+  { label: "İçgörülerim", href: "/my-insights", icon: Lightbulb },
   { label: "Quarter Review", href: "/quarter-review", icon: Trophy },
 ];
 
