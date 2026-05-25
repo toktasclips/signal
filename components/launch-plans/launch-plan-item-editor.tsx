@@ -3,7 +3,10 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
-import { updateLaunchPlanItemContent } from "@/actions/campaign";
+import {
+  updateLaunchPlanItemContent,
+  updateStorySalesItemContent,
+} from "@/actions/campaign";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +17,7 @@ interface LaunchPlanItemEditorProps {
   item: CampaignCalendarItem;
   launchName: string;
   dayLabel: string;
+  mode?: "launch" | "story";
 }
 
 const initialState: ActionState = { status: "idle" };
@@ -46,7 +50,10 @@ function splitNotes(notes: string | null): { systemNotes: string; notes: string 
 
   while (
     contentLines.length > 0 &&
-    (contentLines[0].startsWith("Lansman:") || contentLines[0].startsWith("Gün "))
+    (contentLines[0].startsWith("Lansman:") ||
+      contentLines[0].startsWith("Hikayeden Satış:") ||
+      contentLines[0].startsWith("Gün ") ||
+      contentLines[0].startsWith("Story "))
   ) {
     systemLines.push(contentLines.shift() ?? "");
   }
@@ -61,21 +68,33 @@ export function LaunchPlanItemEditor({
   item,
   launchName,
   dayLabel,
+  mode = "launch",
 }: LaunchPlanItemEditorProps) {
+  const action =
+    mode === "story" ? updateStorySalesItemContent : updateLaunchPlanItemContent;
   const [state, formAction, isPending] = useActionState(
-    updateLaunchPlanItemContent.bind(null, item.id),
+    action.bind(null, item.id),
     initialState
   );
   const titleParts = splitTitle(item.title);
   const noteParts = splitNotes(item.notes);
+  const backHref = mode === "story" ? "/story-sales" : "/launch-plans";
+  const backLabel = mode === "story" ? "Hikayeden Satış" : "Lansman Planları";
+  const pageTitle = mode === "story" ? "Story İçeriği" : "Lansman İçeriği";
+  const titleLabel = mode === "story" ? "Story Başlığı" : "Gün Başlığı";
+  const bodyLabel = mode === "story" ? "Story Metni" : "Ana Metin";
+  const bodyPlaceholder =
+    mode === "story"
+      ? "Buraya story metnini, ekranda görünecek kısa cümleleri, konuşma akışını veya DM CTA notunu yaz..."
+      : "Buraya uzun e-posta, post metni, DM akışı veya konuşma taslağını yaz...";
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8 lg:px-10">
       <div className="mb-6">
         <Button asChild variant="ghost" className="-ml-3">
-          <Link href="/launch-plans">
+          <Link href={backHref}>
             <ArrowLeft className="h-4 w-4" />
-            Lansman Planları
+            {backLabel}
           </Link>
         </Button>
       </div>
@@ -88,7 +107,7 @@ export function LaunchPlanItemEditor({
                 {launchName} · {dayLabel}
               </p>
               <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                Lansman İçeriği
+                {pageTitle}
               </h1>
               <p className="text-sm text-muted-foreground">
                 {formatDate(item.planned_date)}
@@ -127,7 +146,7 @@ export function LaunchPlanItemEditor({
 
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="title">Gün Başlığı</Label>
+              <Label htmlFor="title">{titleLabel}</Label>
               <input
                 type="hidden"
                 name="title_prefix"
@@ -142,12 +161,12 @@ export function LaunchPlanItemEditor({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="offer">Ana Metin</Label>
+              <Label htmlFor="offer">{bodyLabel}</Label>
               <Textarea
                 id="offer"
                 name="offer"
                 defaultValue={item.offer}
-                placeholder="Buraya uzun e-posta, post metni, DM akışı veya konuşma taslağını yaz..."
+                placeholder={bodyPlaceholder}
                 className="min-h-[520px] resize-y text-base leading-8"
               />
             </div>

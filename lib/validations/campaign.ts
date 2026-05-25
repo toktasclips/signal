@@ -19,6 +19,7 @@ export const CAMPAIGN_CALENDAR_CHANNELS = [
   "YouTube",
   "Webinar",
   "Platform Launch",
+  "Story Sales",
   "Referral",
   "Other",
 ] as const;

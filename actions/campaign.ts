@@ -20,6 +20,7 @@ async function getAuthUser() {
 function revalidateAll() {
   revalidatePath("/campaigns");
   revalidatePath("/launch-plans");
+  revalidatePath("/story-sales");
   revalidatePath("/leads");
 }
 
@@ -390,6 +391,94 @@ export async function createCampaignLaunchPlan(
   return { status: "success" };
 }
 
+export async function createStorySalesPlan(
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  let items: unknown = [];
+  try {
+    items = JSON.parse(String(formData.get("items") ?? "[]"));
+  } catch {
+    return { status: "error", error: "Story cards could not be read." };
+  }
+
+  const raw = {
+    launch_name: formData.get("story_name"),
+    duration: formData.get("duration"),
+    start_date: formData.get("start_date"),
+    target_segment: formData.get("target_segment"),
+    channel: "Story Sales",
+    items,
+  };
+
+  const parsed = campaignLaunchPlanSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Validation failed.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const storyItems = parsed.data.items.slice(0, parsed.data.duration);
+  if (storyItems.length !== parsed.data.duration) {
+    return {
+      status: "error",
+      error: `Story akışı ${parsed.data.duration} kart içermeli.`,
+    };
+  }
+
+  const { error } = await supabase.from("campaign_calendar_items").insert(
+    storyItems.map((item) => {
+      const plannedDate = addDays(parsed.data.start_date, item.day - 1);
+
+      return {
+        user_id: user.id,
+        title: `${parsed.data.launch_name} · Story ${item.day}: ${item.title}`,
+        target_segment: parsed.data.target_segment,
+        offer: item.offer,
+        channel: "Story Sales",
+        planned_date: plannedDate,
+        end_date: plannedDate,
+        expected_revenue: item.expected_revenue,
+        status: "planned",
+        notes: [
+          `Hikayeden Satış: ${parsed.data.launch_name}`,
+          `Story ${item.day}/${parsed.data.duration}`,
+          item.notes,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      };
+    })
+  );
+
+  if (error) {
+    return {
+      status: "error",
+      error: `Hikayeden satış akışı oluşturulamadı: ${error.message}`,
+    };
+  }
+
+  trackEvent({
+    userId: user.id,
+    type: "campaign_calendar_created",
+    title: `Story sales plan created: ${parsed.data.launch_name}`,
+    description: `${parsed.data.duration} story kartı ${parsed.data.start_date} tarihinde başlıyor.`,
+    metadata: {
+      channel: "Story Sales",
+      duration: parsed.data.duration,
+      target_segment: parsed.data.target_segment,
+    },
+  });
+
+  revalidateAll();
+  return { status: "success" };
+}
+
 export async function updateLaunchPlanItemContent(
   id: string,
   _: ActionState,
@@ -432,5 +521,50 @@ export async function updateLaunchPlanItemContent(
 
   revalidatePath("/launch-plans");
   revalidatePath(`/launch-plans/${id}`);
+  return { status: "success" };
+}
+
+export async function updateStorySalesItemContent(
+  id: string,
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const titleInput = String(formData.get("title") ?? "").trim();
+  const titlePrefix = String(formData.get("title_prefix") ?? "").trim();
+  const offer = String(formData.get("offer") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+  const systemNotes = String(formData.get("system_notes") ?? "").trim();
+
+  if (!titleInput) {
+    return { status: "error", error: "Başlık boş kalamaz." };
+  }
+
+  if (!offer) {
+    return { status: "error", error: "Story metni boş kalamaz." };
+  }
+
+  const { error } = await supabase
+    .from("campaign_calendar_items")
+    .update({
+      title: titlePrefix ? `${titlePrefix}: ${titleInput}` : titleInput,
+      offer,
+      notes: [systemNotes, notes].filter(Boolean).join("\n") || null,
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("channel", "Story Sales");
+
+  if (error) {
+    return {
+      status: "error",
+      error: `Story içeriği kaydedilemedi: ${error.message}`,
+    };
+  }
+
+  revalidatePath("/story-sales");
+  revalidatePath(`/story-sales/${id}`);
   return { status: "success" };
 }

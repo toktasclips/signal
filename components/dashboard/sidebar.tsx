@@ -15,6 +15,7 @@ import {
   Trophy,
   Database,
   Rocket,
+  MessageSquareText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,11 @@ const navItems = [
     label: "Lansman Planları",
     href: "/launch-plans",
     icon: Rocket,
+  },
+  {
+    label: "Hikayeden Satış",
+    href: "/story-sales",
+    icon: MessageSquareText,
   },
   {
     label: "Tasks",
