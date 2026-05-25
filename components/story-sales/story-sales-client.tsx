@@ -20,7 +20,14 @@ import { cn } from "@/lib/utils";
 import type { ActionState, CampaignCalendarItem } from "@/types";
 
 type StoryStep = 1 | 2 | 3 | 4;
-type StoryTemplateId = "warm-offer" | "proof-stack" | "objection-breaker" | "dm-sprint";
+type StoryTemplateId =
+  | "many-client-proof"
+  | "program-clarity"
+  | "objection-breaker"
+  | "educational-differentiation"
+  | "personal-connection"
+  | "client-results-obstacle"
+  | "mission";
 
 interface StorySalesClientProps {
   storyItems: CampaignCalendarItem[];
@@ -45,60 +52,123 @@ const storyTemplates: Record<
     cards: Array<{ title: string; text: string }>;
   }
 > = {
-  "warm-offer": {
-    name: "Sıcak Teklif Sekansı",
-    description: "Kitleyi problemden teklife yumuşak geçirir.",
-    target: "Sıcak takipçiler ve mevcut kitle",
+  "many-client-proof": {
+    name: "Birçok Müşteriden Gelen Kanıtlar",
+    description: "Birden fazla sonucu gösterip bunun şans değil sistem olduğunu anlatır.",
+    target: "Kanıt görmek isteyen sıcak potansiyel müşteriler",
     cards: [
-      { title: "Bağlam", text: "Bugün şu problemi konuşalım: [ana problem]." },
-      { title: "Ayna", text: "Eğer sen de [belirti] yaşıyorsan yalnız değilsin." },
-      { title: "Mikro Kanıt", text: "[kanıt / sonuç / ekran görüntüsü] burada devreye giriyor." },
-      { title: "Bakış Açısı", text: "Bence mesele [felsefe]. Bu yüzden çözüm şöyle kurulmalı." },
-      { title: "Teklif", text: "[teklif] için bugün DM'den konuşabiliriz." },
-      { title: "DM CTA", text: "İlgileniyorsan bana '[anahtar kelime]' yaz." },
-      { title: "Takip", text: "Dün yazmayı düşünenler için kapıyı bugün de açık tutuyorum." },
+      {
+        title: "Müşteri 1",
+        text: "MÜŞTERİ1 geçen ay [X sonucu] aldı. Bunu [eşsiz mekanizma] uygulayarak yaptı.",
+      },
+      {
+        title: "Müşteri 2",
+        text: "MÜŞTERİ2 geçen ay [X sonucu] aldı. Aynı mekanizma burada da çalıştı.",
+      },
+      {
+        title: "Müşteri 3",
+        text: "MÜŞTERİ3 de [X sonucu] aldı. Arka arkaya gelen sonuçlar artık tesadüf değil.",
+      },
+      {
+        title: "Şans Değil",
+        text: "Bir noktadan sonra buna artık şans diyemezsin. Sistem önce bir kişi için çalıştı, sonra bir başkası için çalıştı.",
+      },
+      {
+        title: "Tekrar Edilebilirlik",
+        text: "Çalışan bir işin arka planındaki mekanizmaları anladığında başarıyı tekrar tekrar yeniden üretebilirsin.",
+      },
+      {
+        title: "Çözüm Bizde",
+        text: "Bizim yaptığımız şey tam olarak bu: neyin işe yaradığını bilip onu düzenli şekilde uygulatmak.",
+      },
+      {
+        title: "CTA",
+        text: "Eğer aynı sonuçları elde etmekle ilgileniyorsan bu story'ye \"SONUÇLAR\" yazarak cevap ver.",
+      },
     ],
   },
-  "proof-stack": {
-    name: "Kanıt Odaklı Satış",
-    description: "Sonuç, referans ve vaka üzerinden güven kurar.",
-    target: "Kararsız potansiyel müşteriler",
+  "program-clarity": {
+    name: "Program Hakkında Açıklık",
+    description: "Mantıklı alıcının programla ilgili sorularını sade şekilde yanıtlar.",
+    target: "Programı merak eden ama netlik isteyen takipçiler",
     cards: [
-      { title: "Öncesi", text: "Başlangıç noktası şuydu: [önceki durum]." },
-      { title: "Süreç", text: "Şunu değiştirdik: [yaklaşım / aksiyon]." },
-      { title: "Sonuç", text: "Sonuç: [metrik / yorum / müşteri sonucu]." },
-      { title: "Neden Çalıştı", text: "Çünkü [stratejik neden]." },
-      { title: "Senin İçin", text: "Bunu kendi işine uyarlamak istersen [teklif]." },
-      { title: "Takip", text: "Detay istiyorsan bana '[anahtar kelime]' yaz." },
-      { title: "Son Hatırlatma", text: "Bu sonucu kendi sürecine taşımak isteyenlerle bugün konuşuyorum." },
+      { title: "SSS Açılışı", text: "Programla ilgili en çok gelen soruları tek tek cevaplayayım." },
+      { title: "Ne Yapar?", text: "Bu program tam olarak [istenen sonuç] için [ana problem] üzerinde çalışır." },
+      { title: "Kimler İçin?", text: "Eğer [kitle tanımı] ve [mevcut durum] içindeysen bu yapı senin için uygun olabilir." },
+      { title: "Nasıl İlerler?", text: "Süreç [adım 1], [adım 2], [adım 3] şeklinde ilerler. Karmaşık değil, takip edilebilir." },
+      { title: "Neden Bu Program?", text: "Çünkü sadece bilgi vermiyoruz; [eşsiz mekanizma] ile uygulamayı ve sonucu merkeze alıyoruz." },
+      { title: "Beklenti", text: "Burada amaç sihirli çözüm değil. Doğru problemi doğru sırayla çözmek." },
+      { title: "CTA", text: "Programın sana uygun olup olmadığını görmek istersen bana \"PROGRAM\" yaz." },
     ],
   },
   "objection-breaker": {
-    name: "İtiraz Kırma",
-    description: "Fiyat, zaman, güven ve karar itirazlarını parçalar.",
-    target: "DM'de bekleyen veya kararsız leadler",
+    name: "Büyük İtirazları Aşmak",
+    description: "Sınırlayıcı inancı gösterip gerçek bir örnekle kırar.",
+    target: "Bahane, zaman, para veya güven itirazı olan potansiyel müşteriler",
     cards: [
-      { title: "İtiraz", text: "'Şu an doğru zaman mı?' sorusunu açalım." },
-      { title: "Maliyet", text: "Asıl maliyet çoğu zaman [devam eden problem]." },
-      { title: "Yanlış Çözüm", text: "Sadece [yanlış yöntem] yapmak problemi çözmüyor." },
-      { title: "Doğru Çerçeve", text: "Ben bunu şöyle ele alıyorum: [felsefe]." },
-      { title: "Plan", text: "İlk adım [plan 1], sonra [plan 2]." },
-      { title: "Çağrı", text: "Bunu birlikte netleştirelim; DM'den '[anahtar kelime]' yaz." },
-      { title: "Kapanış", text: "Kararı ertelemek de bir karar; istersen bugün netleştirelim." },
+      { title: "Hook", text: "\"[itiraz] yüzünden başarılı olamazsın\" cümlesi çoğu zaman doğru değil." },
+      { title: "Karakter", text: "[Müşteri / ben] aynı itirazla başladı: [ana bahane veya sınırlayıcı inanç]." },
+      { title: "Ek Acı", text: "Üstelik bir de [ikinci zorluk] vardı. Yani şartlar mükemmel değildi." },
+      { title: "Karar", text: "Buna rağmen sürece girdi çünkü beklemek problemi çözmüyordu." },
+      { title: "Sonuç", text: "Sonrasında [X sonuç] aldı. Buraya kanıt ekran görüntüsünü ekle." },
+      { title: "Ders", text: "Sorun çoğu zaman şartlar değil; doğru çerçevenin ve sistemin olmaması." },
+      { title: "CTA", text: "Senin itirazını da birlikte netleştirelim. Bana \"NET\" yaz." },
     ],
   },
-  "dm-sprint": {
-    name: "DM Sprint",
-    description: "Hızlı cevap, anket ve DM çağrısıyla lead üretir.",
-    target: "Story etkileşimine açık kitle",
+  "educational-differentiation": {
+    name: "Eğitimsel Farklılaştırma",
+    description: "Problemi öğretir, sonra eşsiz çözüm modelini gösterir.",
+    target: "Problemini anlayan ama çözüm farkını görmesi gereken takipçiler",
     cards: [
-      { title: "Soru", text: "Şu anda en çok hangisi seni zorluyor? [A/B/C]" },
-      { title: "Mini Anket", text: "Bugün [problem] yaşayan kaç kişiyiz?" },
-      { title: "Kısa Çözüm", text: "Ben olsam ilk şunu kontrol ederdim: [adım]." },
-      { title: "Örnek", text: "[kanıt] bunun neden işe yaradığını gösteriyor." },
-      { title: "DM Açıcı", text: "İstersen sana özel hızlıca bakayım." },
-      { title: "Anahtar Kelime", text: "Bana '[anahtar kelime]' yaz, sana yolu göndereyim." },
-      { title: "Cevap Takibi", text: "Dünkü storyde yazanlara dönüş yapıyorum; sen de katılmak istersen DM açık." },
+      { title: "Özel Değer", text: "Normalde ücretsiz olmaması gereken bir şeyi göstereceğim: [problemin gerçek nedeni]." },
+      { title: "Nereden Biliyorum?", text: "Bunu [kanıt / deneyim / müşteri sonucu] sayesinde görüyorum." },
+      { title: "Problemler", text: "İstediğin sonuca ulaşmanı engelleyen 3-4 sebep: [problem 1], [problem 2], [problem 3]." },
+      { title: "Acıyı Derinleştir", text: "Bu problemler çözülmediğinde [sonuçsuzluk / maliyet / gecikme] üretmeye devam eder." },
+      { title: "Model", text: "Bunu tersine çeviren modelin adı: [model adı]." },
+      { title: "Kanıt", text: "Bu model sayesinde [X kişi / X müşteri] şu sonucu aldı: [kanıt]." },
+      { title: "CTA", text: "Modeli kendi işine nasıl uyarlayacağını görmek istersen \"MODEL\" yaz." },
+    ],
+  },
+  "personal-connection": {
+    name: "Kişisel Bağ",
+    description: "Daha insani, günlük ve doğal bir bağ kurar.",
+    target: "Seni daha yakından tanıması gereken takipçiler",
+    cards: [
+      { title: "Günlük An", text: "Bugün [aktivite / yer / küçük an] sırasında şunu düşündüm..." },
+      { title: "Kişisel Hikaye", text: "Eskiden ben de [kişisel durum] içindeydim ve bu bana şunu öğretti." },
+      { title: "Değer", text: "Benim için [değer / felsefe] sadece işte değil hayatta da önemli." },
+      { title: "Bağ Kurma", text: "Bunu anlatıyorum çünkü burada sadece sonuç değil, o sonucu nasıl yaşadığımız da önemli." },
+      { title: "Perde Arkası", text: "Şu aralar üzerinde çalıştığım şey: [arka plan / süreç / küçük detay]." },
+      { title: "İnsan Tarafı", text: "Bazen işin en güçlü tarafı daha fazla taktik değil, daha net bir hayat kurmak oluyor." },
+      { title: "Soft CTA", text: "Bunu yaşayan biriysen bana cevap ver; merak ediyorum sende nasıl görünüyor." },
+    ],
+  },
+  "client-results-obstacle": {
+    name: "Müşteri Sonuçları + Engeli Kaldır",
+    description: "Müşteri sonucu üzerinden katılma engelini ve şüpheyi kaldırır.",
+    target: "Kendini müşteriyle özdeşleştirmesi gereken leadler",
+    cards: [
+      { title: "Müşteriyi Tanıt", text: "[Müşteri], programa katılmadan önce [başlangıç durumu] içindeydi." },
+      { title: "Bağlam", text: "En büyük problemi [problem] idi ve bu yüzden [istenmeyen sonuç] yaşıyordu." },
+      { title: "İtiraz", text: "Başta [itiraz] yüzünden katılmak istemedi. Bu gayet anlaşılırdı." },
+      { title: "Karar", text: "Ama bu itirazı şöyle yeniden çerçeveledik: [itiraz kırma]." },
+      { title: "Katılım", text: "Sonra sürece girdi ve [uygulanan mekanizma] üzerinde çalışmaya başladı." },
+      { title: "Sonuç", text: "Kısa süre sonra [X sonuç] aldı. Buraya referans veya ekran görüntüsü ekle." },
+      { title: "CTA", text: "Benzer bir noktadaysan ve engelini netleştirmek istiyorsan bana \"BAŞLA\" yaz." },
+    ],
+  },
+  mission: {
+    name: "Misyon",
+    description: "Bunu sadece para için yapmadığını gösterip daha derin bağ kurar.",
+    target: "Seni ve işin arkasındaki nedeni anlaması gereken takipçiler",
+    cards: [
+      { title: "Misyon Hook", text: "Benim için bu işin meselesi sadece satış yapmak değil." },
+      { title: "Hazır Olma", text: "Eğitim-koçluk işinin satın alınan değil, hazır olunduğunda başlanan bir iş olmasını göstermek istiyorum." },
+      { title: "Keyifli İş", text: "İnsanların keyif alabildiği kişilerle, ekipleşmeden, stres yaşamadan çalışarak bir iş büyütmesini istiyorum." },
+      { title: "Başka Yol", text: "Çok yorucu iş olmadan ve düşük kalite müşterilerle uğraşmadan da büyük bir iş kurulabileceğini göstermek istiyorum." },
+      { title: "Para Değil", text: "Para önemli, ama misyon yoksa iş çok hızlı şekilde sadece yüke dönüşüyor." },
+      { title: "Ne Beklemelisin?", text: "Hiçbir şeyde sihir yok. Uygula, sonucu gör, düzelt ve daha iyi hale getir." },
+      { title: "CTA", text: "Bu misyon sende de bir yere dokunuyorsa bana cevap ver; bunu kimlerle inşa ettiğim önemli." },
     ],
   },
 };
@@ -155,13 +225,14 @@ function buildCards(templateId: StoryTemplateId): StoryCardDraft[] {
 export function StorySalesClient({ storyItems }: StorySalesClientProps) {
   const [step, setStep] = useState<StoryStep>(1);
   const [storyName, setStoryName] = useState("");
-  const [templateId, setTemplateId] = useState<StoryTemplateId>("warm-offer");
+  const [templateId, setTemplateId] =
+    useState<StoryTemplateId>("many-client-proof");
   const [startDate, setStartDate] = useState("");
   const [targetSegment, setTargetSegment] = useState(
-    storyTemplates["warm-offer"].target
+    storyTemplates["many-client-proof"].target
   );
   const [cards, setCards] = useState<StoryCardDraft[]>(() =>
-    buildCards("warm-offer")
+    buildCards("many-client-proof")
   );
 
   const [state, formAction, isPending] = useActionState(
