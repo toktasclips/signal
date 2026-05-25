@@ -9,9 +9,11 @@ import {
   ChevronRight,
   Loader2,
   MessageSquareText,
+  Pencil,
   Plus,
+  Trash2,
 } from "lucide-react";
-import { createStorySalesPlan } from "@/actions/campaign";
+import { createStorySalesPlan, deleteStorySalesItems } from "@/actions/campaign";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,14 +22,6 @@ import { cn } from "@/lib/utils";
 import type { ActionState, CampaignCalendarItem } from "@/types";
 
 type StoryStep = 1 | 2 | 3 | 4;
-type StoryTemplateId =
-  | "many-client-proof"
-  | "program-clarity"
-  | "objection-breaker"
-  | "educational-differentiation"
-  | "personal-connection"
-  | "client-results-obstacle"
-  | "mission";
 
 interface StorySalesClientProps {
   storyItems: CampaignCalendarItem[];
@@ -43,134 +37,41 @@ interface StoryCardDraft {
 
 const initialState: ActionState = { status: "idle" };
 
-const storyTemplates: Record<
-  StoryTemplateId,
-  {
-    name: string;
-    description: string;
-    target: string;
-    cards: Array<{ title: string; text: string }>;
-  }
-> = {
-  "many-client-proof": {
-    name: "Birçok Müşteriden Gelen Kanıtlar",
-    description: "Birden fazla sonucu gösterip bunun şans değil sistem olduğunu anlatır.",
-    target: "Kanıt görmek isteyen sıcak potansiyel müşteriler",
-    cards: [
-      {
-        title: "Müşteri 1",
-        text: "MÜŞTERİ1 geçen ay [X sonucu] aldı. Bunu [eşsiz mekanizma] uygulayarak yaptı.",
-      },
-      {
-        title: "Müşteri 2",
-        text: "MÜŞTERİ2 geçen ay [X sonucu] aldı. Aynı mekanizma burada da çalıştı.",
-      },
-      {
-        title: "Müşteri 3",
-        text: "MÜŞTERİ3 de [X sonucu] aldı. Arka arkaya gelen sonuçlar artık tesadüf değil.",
-      },
-      {
-        title: "Şans Değil",
-        text: "Bir noktadan sonra buna artık şans diyemezsin. Sistem önce bir kişi için çalıştı, sonra bir başkası için çalıştı.",
-      },
-      {
-        title: "Tekrar Edilebilirlik",
-        text: "Çalışan bir işin arka planındaki mekanizmaları anladığında başarıyı tekrar tekrar yeniden üretebilirsin.",
-      },
-      {
-        title: "Çözüm Bizde",
-        text: "Bizim yaptığımız şey tam olarak bu: neyin işe yaradığını bilip onu düzenli şekilde uygulatmak.",
-      },
-      {
-        title: "CTA",
-        text: "Eğer aynı sonuçları elde etmekle ilgileniyorsan bu story'ye \"SONUÇLAR\" yazarak cevap ver.",
-      },
-    ],
-  },
-  "program-clarity": {
-    name: "Program Hakkında Açıklık",
-    description: "Mantıklı alıcının programla ilgili sorularını sade şekilde yanıtlar.",
-    target: "Programı merak eden ama netlik isteyen takipçiler",
-    cards: [
-      { title: "SSS Açılışı", text: "Programla ilgili en çok gelen soruları tek tek cevaplayayım." },
-      { title: "Ne Yapar?", text: "Bu program tam olarak [istenen sonuç] için [ana problem] üzerinde çalışır." },
-      { title: "Kimler İçin?", text: "Eğer [kitle tanımı] ve [mevcut durum] içindeysen bu yapı senin için uygun olabilir." },
-      { title: "Nasıl İlerler?", text: "Süreç [adım 1], [adım 2], [adım 3] şeklinde ilerler. Karmaşık değil, takip edilebilir." },
-      { title: "Neden Bu Program?", text: "Çünkü sadece bilgi vermiyoruz; [eşsiz mekanizma] ile uygulamayı ve sonucu merkeze alıyoruz." },
-      { title: "Beklenti", text: "Burada amaç sihirli çözüm değil. Doğru problemi doğru sırayla çözmek." },
-      { title: "CTA", text: "Programın sana uygun olup olmadığını görmek istersen bana \"PROGRAM\" yaz." },
-    ],
-  },
-  "objection-breaker": {
-    name: "Büyük İtirazları Aşmak",
-    description: "Sınırlayıcı inancı gösterip gerçek bir örnekle kırar.",
-    target: "Bahane, zaman, para veya güven itirazı olan potansiyel müşteriler",
-    cards: [
-      { title: "Hook", text: "\"[itiraz] yüzünden başarılı olamazsın\" cümlesi çoğu zaman doğru değil." },
-      { title: "Karakter", text: "[Müşteri / ben] aynı itirazla başladı: [ana bahane veya sınırlayıcı inanç]." },
-      { title: "Ek Acı", text: "Üstelik bir de [ikinci zorluk] vardı. Yani şartlar mükemmel değildi." },
-      { title: "Karar", text: "Buna rağmen sürece girdi çünkü beklemek problemi çözmüyordu." },
-      { title: "Sonuç", text: "Sonrasında [X sonuç] aldı. Buraya kanıt ekran görüntüsünü ekle." },
-      { title: "Ders", text: "Sorun çoğu zaman şartlar değil; doğru çerçevenin ve sistemin olmaması." },
-      { title: "CTA", text: "Senin itirazını da birlikte netleştirelim. Bana \"NET\" yaz." },
-    ],
-  },
-  "educational-differentiation": {
-    name: "Eğitimsel Farklılaştırma",
-    description: "Problemi öğretir, sonra eşsiz çözüm modelini gösterir.",
-    target: "Problemini anlayan ama çözüm farkını görmesi gereken takipçiler",
-    cards: [
-      { title: "Özel Değer", text: "Normalde ücretsiz olmaması gereken bir şeyi göstereceğim: [problemin gerçek nedeni]." },
-      { title: "Nereden Biliyorum?", text: "Bunu [kanıt / deneyim / müşteri sonucu] sayesinde görüyorum." },
-      { title: "Problemler", text: "İstediğin sonuca ulaşmanı engelleyen 3-4 sebep: [problem 1], [problem 2], [problem 3]." },
-      { title: "Acıyı Derinleştir", text: "Bu problemler çözülmediğinde [sonuçsuzluk / maliyet / gecikme] üretmeye devam eder." },
-      { title: "Model", text: "Bunu tersine çeviren modelin adı: [model adı]." },
-      { title: "Kanıt", text: "Bu model sayesinde [X kişi / X müşteri] şu sonucu aldı: [kanıt]." },
-      { title: "CTA", text: "Modeli kendi işine nasıl uyarlayacağını görmek istersen \"MODEL\" yaz." },
-    ],
-  },
-  "personal-connection": {
-    name: "Kişisel Bağ",
-    description: "Daha insani, günlük ve doğal bir bağ kurar.",
-    target: "Seni daha yakından tanıması gereken takipçiler",
-    cards: [
-      { title: "Günlük An", text: "Bugün [aktivite / yer / küçük an] sırasında şunu düşündüm..." },
-      { title: "Kişisel Hikaye", text: "Eskiden ben de [kişisel durum] içindeydim ve bu bana şunu öğretti." },
-      { title: "Değer", text: "Benim için [değer / felsefe] sadece işte değil hayatta da önemli." },
-      { title: "Bağ Kurma", text: "Bunu anlatıyorum çünkü burada sadece sonuç değil, o sonucu nasıl yaşadığımız da önemli." },
-      { title: "Perde Arkası", text: "Şu aralar üzerinde çalıştığım şey: [arka plan / süreç / küçük detay]." },
-      { title: "İnsan Tarafı", text: "Bazen işin en güçlü tarafı daha fazla taktik değil, daha net bir hayat kurmak oluyor." },
-      { title: "Soft CTA", text: "Bunu yaşayan biriysen bana cevap ver; merak ediyorum sende nasıl görünüyor." },
-    ],
-  },
-  "client-results-obstacle": {
-    name: "Müşteri Sonuçları + Engeli Kaldır",
-    description: "Müşteri sonucu üzerinden katılma engelini ve şüpheyi kaldırır.",
-    target: "Kendini müşteriyle özdeşleştirmesi gereken leadler",
-    cards: [
-      { title: "Müşteriyi Tanıt", text: "[Müşteri], programa katılmadan önce [başlangıç durumu] içindeydi." },
-      { title: "Bağlam", text: "En büyük problemi [problem] idi ve bu yüzden [istenmeyen sonuç] yaşıyordu." },
-      { title: "İtiraz", text: "Başta [itiraz] yüzünden katılmak istemedi. Bu gayet anlaşılırdı." },
-      { title: "Karar", text: "Ama bu itirazı şöyle yeniden çerçeveledik: [itiraz kırma]." },
-      { title: "Katılım", text: "Sonra sürece girdi ve [uygulanan mekanizma] üzerinde çalışmaya başladı." },
-      { title: "Sonuç", text: "Kısa süre sonra [X sonuç] aldı. Buraya referans veya ekran görüntüsü ekle." },
-      { title: "CTA", text: "Benzer bir noktadaysan ve engelini netleştirmek istiyorsan bana \"BAŞLA\" yaz." },
-    ],
-  },
-  mission: {
-    name: "Misyon",
-    description: "Bunu sadece para için yapmadığını gösterip daha derin bağ kurar.",
-    target: "Seni ve işin arkasındaki nedeni anlaması gereken takipçiler",
-    cards: [
-      { title: "Misyon Hook", text: "Benim için bu işin meselesi sadece satış yapmak değil." },
-      { title: "Hazır Olma", text: "Eğitim-koçluk işinin satın alınan değil, hazır olunduğunda başlanan bir iş olmasını göstermek istiyorum." },
-      { title: "Keyifli İş", text: "İnsanların keyif alabildiği kişilerle, ekipleşmeden, stres yaşamadan çalışarak bir iş büyütmesini istiyorum." },
-      { title: "Başka Yol", text: "Çok yorucu iş olmadan ve düşük kalite müşterilerle uğraşmadan da büyük bir iş kurulabileceğini göstermek istiyorum." },
-      { title: "Para Değil", text: "Para önemli, ama misyon yoksa iş çok hızlı şekilde sadece yüke dönüşüyor." },
-      { title: "Ne Beklemelisin?", text: "Hiçbir şeyde sihir yok. Uygula, sonucu gör, düzelt ve daha iyi hale getir." },
-      { title: "CTA", text: "Bu misyon sende de bir yere dokunuyorsa bana cevap ver; bunu kimlerle inşa ettiğim önemli." },
-    ],
-  },
+const holisticStoryTemplate = {
+  name: "Holistik Story Kurgusu",
+  description:
+    "Haftanın her günü farklı bir psikolojik tetikleyiciyi çalıştıran 7 günlük satış sekansı.",
+  target: "Story izleyen sıcak takipçiler ve potansiyel müşteriler",
+  cards: [
+    {
+      title: "Kanıt",
+      text: "Birçok müşteriden gelen sonuçları göster. MÜŞTERİ1, MÜŞTERİ2 ve MÜŞTERİ3 için [X sonuç] + [eşsiz mekanizma] anlat. Sonra bunun şans değil tekrar edilebilir sistem olduğunu bağla. CTA: \"SONUÇLAR\".",
+    },
+    {
+      title: "Netlik",
+      text: "Program hakkında açıklık ver. İnsanların sorduğu soruları cevapla: program ne yapar, kimler için, nasıl ilerler, neden bu yöntemi seçmeli, ne beklemeli? CTA: \"PROGRAM\".",
+    },
+    {
+      title: "İtiraz",
+      text: "Büyük itirazı veya sınırlayıcı inancı kır. Hook ile başla, itiraz yaşayan karakteri tanıt, ek zorluğu göster, buna rağmen sürece girip sonuç aldığını kanıtla. CTA: \"NET\".",
+    },
+    {
+      title: "Farklılaşma",
+      text: "Eğitimsel yaklaşım kullan. Problemin gerçek nedenini öğret, bunu nereden bildiğini kanıtla, 3-4 problemi sırala, acıyı derinleştir, kendi modelini tanıt ve kanıtla. CTA: \"MODEL\".",
+    },
+    {
+      title: "Kişisel Bağ",
+      text: "Daha hafif ve insani bir sekans paylaş. Günlük bir an, kişisel hikaye, değer veya perde arkası üzerinden bağ kur. Amaç satış baskısı değil, gerçek insan hissi.",
+    },
+    {
+      title: "Engel Kaldırma",
+      text: "Müşteri sonuçlarıyla katılma engelini kaldır. Müşteriyi tanıt, başlangıç problemini anlat, itirazını göster, nasıl karar verdiğini ve hangi sonucu aldığını kanıtla. CTA: \"BAŞLA\".",
+    },
+    {
+      title: "Misyon",
+      text: "Misyonu anlat: eğitim-koçluk işinin satın alınan değil hazır olunduğunda başlanan bir iş olduğunu göstermek; keyif alınan insanlarla, strese boğulmadan, kaliteli müşterilerle büyümek. Bitir: uygula, sonucu gör, düzelt.",
+    },
+  ],
 };
 
 function addDays(date: string, days: number): string {
@@ -212,12 +113,12 @@ function groupStoryItems(items: CampaignCalendarItem[]) {
   }));
 }
 
-function buildCards(templateId: StoryTemplateId): StoryCardDraft[] {
-  return storyTemplates[templateId].cards.map((card, index) => ({
+function buildCards(): StoryCardDraft[] {
+  return holisticStoryTemplate.cards.map((card, index) => ({
     day: index + 1,
     title: card.title,
     text: card.text,
-    notes: `${storyTemplates[templateId].name} story sekansı. Görsel notu, sticker ve DM takip fikrini burada detaylandır.`,
+    notes: `${holisticStoryTemplate.name} story sekansı. Görsel notu, sticker ve DM takip fikrini burada detaylandır.`,
     expected_revenue: "",
   }));
 }
@@ -225,15 +126,9 @@ function buildCards(templateId: StoryTemplateId): StoryCardDraft[] {
 export function StorySalesClient({ storyItems }: StorySalesClientProps) {
   const [step, setStep] = useState<StoryStep>(1);
   const [storyName, setStoryName] = useState("");
-  const [templateId, setTemplateId] =
-    useState<StoryTemplateId>("many-client-proof");
   const [startDate, setStartDate] = useState("");
-  const [targetSegment, setTargetSegment] = useState(
-    storyTemplates["many-client-proof"].target
-  );
-  const [cards, setCards] = useState<StoryCardDraft[]>(() =>
-    buildCards("many-client-proof")
-  );
+  const [targetSegment, setTargetSegment] = useState(holisticStoryTemplate.target);
+  const [cards, setCards] = useState<StoryCardDraft[]>(() => buildCards());
 
   const [state, formAction, isPending] = useActionState(
     async (prevState: ActionState, formData: FormData) => {
@@ -244,7 +139,6 @@ export function StorySalesClient({ storyItems }: StorySalesClientProps) {
   );
 
   const groups = useMemo(() => groupStoryItems(storyItems), [storyItems]);
-  const selectedTemplate = storyTemplates[templateId];
   const payload = useMemo(
     () =>
       JSON.stringify(
@@ -264,12 +158,6 @@ export function StorySalesClient({ storyItems }: StorySalesClientProps) {
     step === 2 ||
     (step === 3 && startDate.length > 0) ||
     step === 4;
-
-  const selectTemplate = (id: StoryTemplateId) => {
-    setTemplateId(id);
-    setTargetSegment(storyTemplates[id].target);
-    setCards(buildCards(id));
-  };
 
   const next = () => {
     if (!canContinue || step === 4) return;
@@ -300,8 +188,8 @@ export function StorySalesClient({ storyItems }: StorySalesClientProps) {
               Yeni Story Akışı Hazırla
             </h2>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
-              Hazır satış sekanslarından birini seç, story kartlarını düzenle ve
-              her kartı ayrı çalışma sayfasında detaylandır.
+              Holistik story kurgusunu seç, 7 günlük akışı düzenle ve her kartı
+              ayrı çalışma sayfasında detaylandır.
             </p>
           </div>
           <div className="hidden gap-1 sm:flex">
@@ -370,30 +258,36 @@ export function StorySalesClient({ storyItems }: StorySalesClientProps) {
           {step === 2 && (
             <StepPanel
               label="2. Adım"
-              title="Hangi story sekansı?"
-              description="İhtiyacına en yakın satış akışını seç; sonra tüm kartları düzenleyebilirsin."
+              title="Story sekansı"
+              description="Bu alanda tek ana akış kullanılıyor; hafta boyunca farklı psikolojik tetikleyiciler sırayla çalışır."
             >
-              <div className="grid gap-3 md:grid-cols-2">
-                {(Object.keys(storyTemplates) as StoryTemplateId[]).map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => selectTemplate(id)}
-                    className={cn(
-                      "rounded-xl border p-4 text-left transition-all",
-                      templateId === id
-                        ? "border-primary/30 bg-primary/8 shadow-sm"
-                        : "border-border bg-background hover:border-primary/20"
-                    )}
-                  >
+              <div className="rounded-xl border border-primary/30 bg-primary/8 p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
                     <p className="text-base font-semibold text-foreground">
-                      {storyTemplates[id].name}
+                      {holisticStoryTemplate.name}
                     </p>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {storyTemplates[id].description}
+                      {holisticStoryTemplate.description}
                     </p>
-                  </button>
-                ))}
+                  </div>
+                  <Check className="mt-1 h-4 w-4 text-primary" />
+                </div>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  {holisticStoryTemplate.cards.map((card, index) => (
+                    <div
+                      key={card.title}
+                      className="rounded-lg border border-border/70 bg-background/70 px-3 py-2"
+                    >
+                      <p className="text-[11px] font-semibold uppercase text-muted-foreground">
+                        Gün {index + 1}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">
+                        {card.title}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </StepPanel>
           )}
@@ -429,7 +323,7 @@ export function StorySalesClient({ storyItems }: StorySalesClientProps) {
           {step === 4 && (
             <StepPanel
               label="4. Adım"
-              title={`${selectedTemplate.name} kartlarını kontrol et`}
+              title={`${holisticStoryTemplate.name} kartlarını kontrol et`}
               description="Her story kartının başlığını ve ekranda görünecek ana metnini burada düzenle."
             >
               <div className="grid gap-3 lg:grid-cols-3">
@@ -555,7 +449,35 @@ export function StorySalesClient({ storyItems }: StorySalesClientProps) {
                       {group.items.length} story kartı
                     </p>
                   </div>
-                  <Check className="h-4 w-4 text-primary" />
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/story-sales/${group.items[0]?.id ?? ""}`}>
+                        <Pencil className="h-3.5 w-3.5" />
+                        Kartları düzenle
+                      </Link>
+                    </Button>
+                    <form
+                      action={deleteStorySalesItems}
+                      onSubmit={(event) => {
+                        if (!confirm(`"${group.name}" story akışı silinsin mi?`)) {
+                          event.preventDefault();
+                        }
+                      }}
+                    >
+                      {group.items.map((item) => (
+                        <input
+                          key={item.id}
+                          type="hidden"
+                          name="item_id"
+                          value={item.id}
+                        />
+                      ))}
+                      <Button type="submit" variant="outline" size="sm">
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Sil
+                      </Button>
+                    </form>
+                  </div>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                   {group.items.map((item, index) => (

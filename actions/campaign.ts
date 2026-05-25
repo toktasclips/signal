@@ -294,6 +294,37 @@ export async function deleteCampaignCalendarItem(id: string): Promise<ActionStat
   return { status: "success" };
 }
 
+export async function deleteStorySalesItems(formData: FormData): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const ids = formData
+    .getAll("item_id")
+    .map((id) => String(id))
+    .filter(Boolean);
+
+  if (ids.length === 0) {
+    return { status: "error", error: "Silinecek story akışı bulunamadı." };
+  }
+
+  const { error } = await supabase
+    .from("campaign_calendar_items")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("channel", "Story Sales")
+    .in("id", ids);
+
+  if (error) {
+    return {
+      status: "error",
+      error: `Story akışı silinemedi: ${error.message}`,
+    };
+  }
+
+  revalidateAll();
+  return { status: "success" };
+}
+
 function addDays(date: string, days: number): string {
   const next = new Date(`${date}T00:00:00`);
   next.setDate(next.getDate() + days);
