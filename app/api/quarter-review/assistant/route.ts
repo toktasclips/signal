@@ -1,7 +1,9 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { TURKISH_MONTHS } from "@/lib/analytics/mock-data";
+import { assistantRatelimit } from "@/lib/ratelimit";
 import type { MonthlyMetric } from "@/lib/analytics/types";
 
 export const runtime = "nodejs";
@@ -43,6 +45,17 @@ function client(): OpenAI | null {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
   return new OpenAI({ apiKey });
+}
+
+async function getIp(): Promise<string> {
+  const h = await headers();
+  return (
+    h.get("x-vercel-forwarded-for") ??
+    h.get("cf-connecting-ip") ??
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    "unknown"
+  );
 }
 
 function money(value: unknown): number {
@@ -155,6 +168,14 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { success } = await assistantRatelimit.limit(`${user.id}:${await getIp()}`);
+  if (!success) {
+    return NextResponse.json(
+      { error: "Çok fazla istek atıldı. Biraz sonra tekrar dene." },
+      { status: 429 }
+    );
   }
 
   const openai = client();

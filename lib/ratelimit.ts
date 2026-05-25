@@ -23,3 +23,9 @@ export const forgotPasswordRatelimit = new Ratelimit({
   limiter: Ratelimit.slidingWindow(3, "1 h"),
   prefix: "rl:forgot",
 });
+
+export const assistantRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, "10 m"),
+  prefix: "rl:assistant",
+});

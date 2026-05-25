@@ -77,7 +77,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  const event = JSON.parse(payload) as StripeEvent;
+  let event: StripeEvent;
+  try {
+    event = JSON.parse(payload) as StripeEvent;
+  } catch {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
   if (!SUPPORTED_EVENTS.has(event.type)) {
     return NextResponse.json({ received: true, ignored: true });
   }
@@ -88,10 +94,9 @@ export async function POST(request: Request) {
     await syncStripeCurrentPeriod(userId, supabase);
     return NextResponse.json({ received: true });
   } catch (error) {
+    console.error("Stripe webhook failed", error);
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Stripe webhook failed.",
-      },
+      { error: "Stripe webhook failed." },
       { status: 500 }
     );
   }
