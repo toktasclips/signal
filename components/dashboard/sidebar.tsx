@@ -14,7 +14,6 @@ import {
   TrendingUp,
   PlusCircle,
   Trophy,
-  CalendarPlus,
   Database,
   Rocket,
 } from "lucide-react";
@@ -30,11 +29,6 @@ const navItems = [
     label: "Campaigns",
     href: "/campaigns",
     icon: Megaphone,
-  },
-  {
-    label: "Kampanya Takvimi",
-    href: "/campaign-calendar",
-    icon: CalendarPlus,
   },
   {
     label: "Lansman Planları",

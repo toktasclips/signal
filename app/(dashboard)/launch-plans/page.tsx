@@ -46,7 +46,7 @@ export default async function LaunchPlansPage() {
         </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
           7 veya 14 günlük lansman stratejilerini ayrı planla; gün gün içerik
-          akışını oluşturup otomatik Kampanya Takvimi’ne yansıt.
+          akışını oluşturup her günü ayrı bir çalışma sayfasında yaz.
         </p>
       </div>
 

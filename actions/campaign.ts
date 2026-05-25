@@ -19,7 +19,6 @@ async function getAuthUser() {
 
 function revalidateAll() {
   revalidatePath("/campaigns");
-  revalidatePath("/campaign-calendar");
   revalidatePath("/launch-plans");
   revalidatePath("/leads");
   revalidatePath("/signals");
@@ -389,5 +388,50 @@ export async function createCampaignLaunchPlan(
   });
 
   revalidateAll();
+  return { status: "success" };
+}
+
+export async function updateLaunchPlanItemContent(
+  id: string,
+  _: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await getAuthUser();
+  if (!user) return { status: "error", error: "Unauthorized" };
+
+  const titleInput = String(formData.get("title") ?? "").trim();
+  const titlePrefix = String(formData.get("title_prefix") ?? "").trim();
+  const offer = String(formData.get("offer") ?? "").trim();
+  const notes = String(formData.get("notes") ?? "").trim();
+  const systemNotes = String(formData.get("system_notes") ?? "").trim();
+
+  if (!titleInput) {
+    return { status: "error", error: "Başlık boş kalamaz." };
+  }
+
+  if (!offer) {
+    return { status: "error", error: "İçerik metni boş kalamaz." };
+  }
+
+  const { error } = await supabase
+    .from("campaign_calendar_items")
+    .update({
+      title: titlePrefix ? `${titlePrefix}: ${titleInput}` : titleInput,
+      offer,
+      notes: [systemNotes, notes].filter(Boolean).join("\n") || null,
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("channel", "Platform Launch");
+
+  if (error) {
+    return {
+      status: "error",
+      error: `Lansman içeriği kaydedilemedi: ${error.message}`,
+    };
+  }
+
+  revalidatePath("/launch-plans");
+  revalidatePath(`/launch-plans/${id}`);
   return { status: "success" };
 }

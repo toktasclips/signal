@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   CalendarDays,
   Check,
@@ -215,7 +216,7 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
             </h2>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
               Lansmanı önce strateji bloklarıyla kur, sonra gün gün içerik akışını
-              kontrol edip takvime aktar.
+              kontrol edip çalışma alanına aktar.
             </p>
           </div>
           <div className="hidden gap-1 sm:flex">
@@ -259,7 +260,7 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
           {state.status === "success" && (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
               <p className="text-xs font-medium text-emerald-700">
-                Lansman takvime eklendi. Kampanya Takvimi’nde gün gün görünecek.
+                Lansman planı eklendi. Gün kartlarını açıp uzun metinleri yazabilirsin.
               </p>
             </div>
           )}
@@ -268,7 +269,7 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
             <StepPanel
               label="1. Adım"
               title="Kampanyanın ismi ne?"
-              description="Bu isim hem burada hem Kampanya Takvimi’nde lansman grubunu tanımlar."
+              description="Bu isim lansman grubunu ve içerik akışını tanımlar."
             >
               <div className="max-w-xl space-y-1.5">
                 <Label htmlFor="launch-name">Kampanya İsmi</Label>
@@ -372,7 +373,7 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
             <StepPanel
               label="5. Adım"
               title="Gün gün lansman akışını kontrol et"
-              description="Kartları burada düzenleyip kaydettiğinde otomatik Kampanya Takvimi’ne düşer."
+              description="Kartları burada düzenleyip kaydettiğinde Lansman İçerik Takvimi’nde gün gün açılır."
             >
               <div className="grid gap-3 lg:grid-cols-7">
                 {cards.map((card) => {
@@ -501,8 +502,9 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
                 </div>
                 <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                   {group.items.map((item, index) => (
-                    <div
+                    <Link
                       key={item.id}
+                      href={`/launch-plans/${item.id}`}
                       className="rounded-lg border border-border bg-background p-3"
                     >
                       <p className="text-[11px] font-semibold uppercase text-muted-foreground">
@@ -514,7 +516,7 @@ export function LaunchPlansClient({ launchItems }: LaunchPlansClientProps) {
                       <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
                         {item.offer}
                       </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
