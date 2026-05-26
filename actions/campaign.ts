@@ -294,9 +294,9 @@ export async function deleteCampaignCalendarItem(id: string): Promise<ActionStat
   return { status: "success" };
 }
 
-export async function deleteStorySalesItems(formData: FormData): Promise<ActionState> {
+export async function deleteStorySalesItems(formData: FormData): Promise<void> {
   const { supabase, user } = await getAuthUser();
-  if (!user) return { status: "error", error: "Unauthorized" };
+  if (!user) return;
 
   const ids = formData
     .getAll("item_id")
@@ -304,7 +304,7 @@ export async function deleteStorySalesItems(formData: FormData): Promise<ActionS
     .filter(Boolean);
 
   if (ids.length === 0) {
-    return { status: "error", error: "Silinecek story akışı bulunamadı." };
+    return;
   }
 
   const { error } = await supabase
@@ -314,15 +314,9 @@ export async function deleteStorySalesItems(formData: FormData): Promise<ActionS
     .eq("channel", "Story Sales")
     .in("id", ids);
 
-  if (error) {
-    return {
-      status: "error",
-      error: `Story akışı silinemedi: ${error.message}`,
-    };
-  }
+  if (error) return;
 
   revalidateAll();
-  return { status: "success" };
 }
 
 function addDays(date: string, days: number): string {
