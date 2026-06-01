@@ -1,18 +1,38 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { loginRatelimit, registerRatelimit, forgotPasswordRatelimit } from "@/lib/ratelimit";
 import {
   loginSchema,
   registerSchema,
   forgotPasswordSchema,
+  updatePasswordSchema,
 } from "@/lib/validations/auth";
 import type { ActionState } from "@/types";
+
+async function getIp(): Promise<string> {
+  const h = await headers();
+  return (
+    h.get("x-vercel-forwarded-for") ??
+    h.get("cf-connecting-ip") ??
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    "unknown"
+  );
+}
 
 export async function login(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const ip = await getIp();
+  const { success } = await loginRatelimit.limit(ip);
+  if (!success) {
+    return { status: "error", error: "Too many attempts. Please try again later." };
+  }
+
   const raw = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
@@ -46,13 +66,19 @@ export async function login(
     };
   }
 
-  redirect("/dashboard");
+  redirect("/leads");
 }
 
 export async function register(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const ip = await getIp();
+  const { success } = await registerRatelimit.limit(ip);
+  if (!success) {
+    return { status: "error", error: "Too many attempts. Please try again later." };
+  }
+
   const raw = {
     fullName: formData.get("fullName") as string,
     email: formData.get("email") as string,
@@ -80,17 +106,11 @@ export async function register(
       data: {
         full_name: parsed.data.fullName,
       },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
     },
   });
 
   if (error) {
-    if (error.message.toLowerCase().includes("already registered")) {
-      return {
-        status: "error",
-        error: "An account with this email already exists",
-        fieldErrors: { email: ["This email is already in use"] },
-      };
-    }
     return {
       status: "error",
       error: "Unable to create account. Please try again.",
@@ -108,6 +128,12 @@ export async function forgotPassword(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  const ip = await getIp();
+  const { success } = await forgotPasswordRatelimit.limit(ip);
+  if (!success) {
+    return { status: "error", error: "Too many attempts. Please try again later." };
+  }
+
   const raw = {
     email: formData.get("email") as string,
   };
@@ -143,6 +169,50 @@ export async function forgotPassword(
     status: "success",
     message: "If an account exists, a reset link has been sent to your email.",
   };
+}
+
+export async function updatePassword(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const raw = {
+    password: formData.get("password") as string,
+    confirmPassword: formData.get("confirmPassword") as string,
+  };
+
+  const parsed = updatePasswordSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: "Invalid input",
+      fieldErrors: parsed.error.flatten().fieldErrors as Record<
+        string,
+        string[]
+      >,
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { status: "error", error: "Unauthorized" };
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return {
+      status: "error",
+      error: "Unable to update password. Please try again.",
+    };
+  }
+
+  redirect("/leads");
 }
 
 export async function logout(): Promise<void> {

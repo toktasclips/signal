@@ -2,7 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_ROUTES = ["/login", "/register", "/forgot-password"];
+const PUBLIC_ROUTES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/update-password",
+  "/auth/callback",
+  "/api/stripe/webhook",
+];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -48,7 +55,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && (isPublicRoute || isRootPath)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/leads";
     return NextResponse.redirect(url);
   }
 

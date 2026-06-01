@@ -1,0 +1,42 @@
+CREATE TABLE IF NOT EXISTS monthly_metrics (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  month integer NOT NULL CHECK (month BETWEEN 1 AND 12),
+  year integer NOT NULL CHECK (year >= 2020),
+  total_goal numeric,
+  new_deal_value numeric,
+  monthly_recurring_revenue numeric,
+  cash_collected numeric,
+  ad_spend numeric,
+  instagram_reach integer,
+  instagram_impressions integer,
+  cpm numeric,
+  roas numeric,
+  new_customers integer,
+  instagram_followers integer,
+  engagement numeric,
+  profile_visits integer,
+  youtube_subscribers integer,
+  youtube_watch_hours numeric,
+  shares integer,
+  email_list integer,
+  software_expenses numeric,
+  other_expenses numeric,
+  profit numeric,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(month, year)
+);
+
+CREATE TABLE IF NOT EXISTS quarter_reviews (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  quarter integer NOT NULL CHECK (quarter BETWEEN 1 AND 4),
+  year integer NOT NULL CHECK (year >= 2020),
+  wins text,
+  bottlenecks text,
+  opportunities text,
+  next_focus text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(quarter, year)
+);

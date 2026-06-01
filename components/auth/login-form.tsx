@@ -74,15 +74,6 @@ export function LoginForm() {
         )}
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/register"
-          className="font-medium text-foreground hover:text-primary transition-colors"
-        >
-          Create one
-        </Link>
-      </p>
     </form>
   );
 }

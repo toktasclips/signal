@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { avatarUrlSchema } from "@/lib/validations/auth";
 import type { AuthUser } from "@/types";
 
 export default async function DashboardLayout({
@@ -17,11 +18,13 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const parsedAvatar = avatarUrlSchema.safeParse(user.user_metadata?.avatar_url);
+
   const authUser: AuthUser = {
     id: user.id,
     email: user.email ?? "",
     fullName: user.user_metadata?.full_name as string | undefined,
-    avatarUrl: user.user_metadata?.avatar_url as string | undefined,
+    avatarUrl: parsedAvatar.success ? (parsedAvatar.data ?? undefined) : undefined,
   };
 
   return <DashboardShell user={authUser}>{children}</DashboardShell>;
